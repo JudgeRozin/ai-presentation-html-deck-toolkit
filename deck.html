@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HTML Deck Toolkit — picker · multi-picker · PDF 1 slide = 1 page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================================
+   BASE — 1280x720 canvas, scaled to the viewport by JS (scale factor 0.94)
+   ========================================================================== */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#050B1E;
+  font-family:var(--font-b);color:#0B1A45}
+:root{
+  --navy:#0B1A45; --slate:#475569; --muted:#BCC6E4; --line:rgba(11,26,69,.14);
+  --cyan:#22D3EE; --cyan-d:#0891B2; --gold:#FFC000; --amber:#8A5A12;
+  --card:#FFFFFF; --tray:#0E2356;
+  --font-h:'Sora',system-ui,sans-serif; --font-b:'Inter',system-ui,sans-serif;
+  --font-m:'JetBrains Mono',ui-monospace,monospace;
+}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#deck{position:relative;width:1280px;height:720px;border-radius:16px;overflow:hidden;
+  background:var(--navy);box-shadow:0 30px 90px rgba(0,0,0,.6);transform-origin:center center}
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .32s ease}
+.slide.active{opacity:1;visibility:visible}
+.canvas{position:absolute;inset:0;display:flex;flex-direction:column;padding:52px 64px 58px;
+  background:var(--navy);overflow:hidden}
+.canvas::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(1200px 600px at 85% -10%, rgba(34,211,238,.16), transparent 62%),
+             radial-gradient(900px 500px at -10% 110%, rgba(21,96,130,.38), transparent 62%)}
+.canvas > *{position:relative;z-index:1}
+
+/* slide header + body ------------------------------------------------------ */
+.shead{flex:none;display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.eyebrow{font-family:var(--font-h);font-size:12px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--cyan)}
+.shead h2{margin:0;font-family:var(--font-h);font-size:33px;font-weight:700;line-height:1.18;
+  color:#F4F7FF;letter-spacing:-.01em}
+.shead h2 em{font-style:normal;color:var(--gold)}
+.sbody{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.sbody.wide{grid-template-columns:1.06fr .94fr}
+
+/* cards -------------------------------------------------------------------- */
+.card{background:var(--card);border-radius:16px;padding:20px 22px;display:flex;
+  flex-direction:column;gap:11px;min-height:0;box-shadow:0 10px 26px rgba(0,0,0,.22)}
+.card.tray{background:var(--tray);border:1px solid rgba(34,211,238,.42);
+  box-shadow:0 10px 26px rgba(0,0,0,.28)}
+.qlabel{font-family:var(--font-h);font-size:12px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--cyan-d)}
+.card.tray .qlabel{color:var(--cyan)}
+.quote{margin:0;font-family:var(--font-h);font-size:19px;font-weight:600;line-height:1.34;color:var(--navy)}
+.card.tray .quote,.card.tray li,.card.tray p{color:#F4F7FF}
+.ul{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:8px}
+.ul li{font-size:15px;line-height:1.42;color:var(--slate)}
+.ul li b{color:var(--navy);font-weight:600}
+.card.tray .ul li{color:var(--muted)}
+.card.tray .ul li b{color:#FFFFFF}
+.steps{counter-reset:s;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.steps li{counter-increment:s;position:relative;padding-left:32px;font-size:15px;line-height:1.44;color:var(--slate)}
+.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:1px;
+  width:22px;height:22px;border-radius:7px;background:rgba(34,211,238,.14);border:1px solid rgba(8,145,178,.4);
+  color:var(--cyan-d);font-family:var(--font-h);font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center}
+.steps li b{color:var(--navy)}
+kbd{display:inline-block;min-width:20px;padding:2px 6px;border-radius:6px;background:var(--navy);
+  color:#F4F7FF;font-family:var(--font-m);font-size:12px;font-weight:600;text-align:center;line-height:1.35}
+pre{margin:0;padding:13px 14px;border-radius:11px;background:#F4F6FB;border:1px solid var(--line);
+  font-family:var(--font-m);font-size:12.5px;line-height:1.62;color:#132A5E;
+  white-space:pre-wrap;word-break:break-word}
+.card.tray pre{background:rgba(3,8,24,.6);border-color:rgba(34,211,238,.34);color:#DCE6FF}
+pre .t{color:var(--cyan-d);font-weight:600}
+pre .g{color:var(--amber);font-weight:600}
+.card.tray pre .t{color:var(--cyan)} .card.tray pre .g{color:var(--gold)}
+.locs{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.locs li{font-size:14px;line-height:1.36;color:var(--slate);padding-left:14px;position:relative}
+.locs li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--cyan)}
+.locs li b{color:var(--navy)}
+
+/* tables ------------------------------------------------------------------- */
+table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;font-family:var(--font-h);font-size:12px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--cyan-d);padding:0 0 7px;border-bottom:1px solid var(--line)}
+.tbl td{padding:7px 0;border-bottom:1px solid rgba(11,26,69,.08);color:var(--slate);line-height:1.34;vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl td b{color:var(--navy);font-weight:600}
+.tbl code{font-family:var(--font-m);font-size:12.5px;color:#132A5E;background:#EEF2FA;
+  border-radius:5px;padding:1px 5px}
+.card.tray .tbl th{color:var(--cyan);border-color:rgba(34,211,238,.3)}
+.card.tray .tbl td{color:var(--muted);border-color:rgba(255,255,255,.12)}
+.card.tray .tbl td b{color:#FFFFFF}
+.card.tray .tbl code{background:rgba(3,8,24,.55);color:#DCE6FF}
+
+/* cover -------------------------------------------------------------------- */
+.cover{flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px}
+.kicker{font-family:var(--font-h);font-size:12px;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--cyan)}
+.cover-title{margin:0;font-family:var(--font-h);font-size:52px;font-weight:800;line-height:1.16;
+  letter-spacing:-.02em;color:#F4F7FF}
+.cover-title em{font-style:normal;color:var(--gold)}
+.cover-sub{margin:0;max-width:830px;font-size:17px;line-height:1.55;color:var(--muted)}
+.cover-sub b{color:#FFFFFF;font-weight:600}
+.chips{display:flex;gap:10px;margin-top:6px}
+.chips span{font-family:var(--font-h);font-size:12px;font-weight:600;letter-spacing:.04em;
+  padding:6px 13px;border-radius:999px;border:1px solid rgba(34,211,238,.42);
+  background:rgba(34,211,238,.1);color:var(--cyan)}
+.cover-foot{position:absolute;left:64px;right:64px;bottom:34px;display:flex;justify-content:space-between;
+  font-family:var(--font-m);font-size:12px;color:#93A2CE;z-index:1}
+
+/* deck chrome -------------------------------------------------------------- */
+#progress{position:absolute;left:0;top:0;height:3px;width:0;background:var(--cyan);z-index:60;transition:width .3s}
+#nav{position:absolute;left:0;right:0;bottom:0;height:52px;display:flex;align-items:center;gap:12px;
+  padding:0 18px;background:rgba(3,6,15,.72);backdrop-filter:blur(8px);
+  border-top:1px solid rgba(255,255,255,.08);z-index:50}
+#nav button{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#DCE6FF;
+  border-radius:9px;padding:6px 11px;font-family:var(--font-b);font-size:13px;font-weight:600;cursor:pointer}
+#nav button:hover{background:rgba(34,211,238,.18);border-color:rgba(34,211,238,.5);color:#FFFFFF}
+.nav-dots{display:flex;gap:8px;margin-left:4px}
+.nav-dots button{width:9px;height:9px;padding:0;border-radius:50%;border:none;
+  background:rgba(255,255,255,.3);cursor:pointer}
+.nav-dots button.active{background:var(--cyan);transform:scale(1.45)}
+#nav .spacer{flex:1}
+#partDl{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#DCE6FF;
+  border-radius:9px;padding:6px 9px;font-family:var(--font-b);font-size:13px;font-weight:600;cursor:pointer}
+#pdfBtn{background:rgba(255,192,0,.14);border-color:rgba(255,192,0,.5);color:var(--gold)}
+#pdfBtn:hover{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+#hint{position:absolute;left:50%;transform:translateX(-50%);bottom:58px;z-index:45;
+  font-family:var(--font-b);font-size:12px;font-weight:500;color:#9FB0DA;
+  background:rgba(3,6,15,.6);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:5px 14px}
+#pdfToast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);z-index:9999;display:none;
+  background:rgba(255,192,0,.95);color:#0B1A45;font-family:var(--font-b);font-size:12.5px;font-weight:700;
+  border-radius:10px;padding:9px 16px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.pgstack{flex:none;align-self:flex-start}
+
+/* ============================================================================
+   FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (CSS)
+   Everything from here to the end of the picker block is the feature itself.
+   ========================================================================== */
+#pickBar{position:fixed;left:14px;bottom:12px;display:flex;align-items:center;gap:8px;z-index:9996}
+#pickBtn,#pickMultiBtn{position:static;border-radius:999px;padding:7px 14px;
+  font-family:var(--font-b);font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px)}
+#pickBtn{background:rgba(3,6,15,.85);color:var(--cyan);border:1px solid rgba(34,211,238,.45)}
+#pickBtn:hover{background:rgba(34,211,238,.15)}
+#pickMultiBtn{background:rgba(3,6,15,.85);color:var(--gold);border:1px solid rgba(255,192,0,.45)}
+#pickMultiBtn:hover{background:rgba(255,192,0,.15)}
+body.pick-mode,body.pick-mode *{cursor:crosshair !important}
+.pick-hover{outline:2px solid var(--cyan) !important;outline-offset:-2px !important}
+.pick-selected{outline:2.5px solid var(--gold) !important;outline-offset:-2px !important}
+.pick-sel{outline:2.5px solid var(--gold) !important;outline-offset:-2px !important;
+  box-shadow:0 0 0 4px rgba(255,192,0,.16) !important}
+#pickTip{position:fixed;z-index:9997;display:none;pointer-events:none;max-width:360px;
+  background:rgba(3,6,15,.94);border:1px solid rgba(34,211,238,.45);color:#F4F7FF;
+  font-family:var(--font-b);font-size:12px;line-height:1.45;padding:7px 10px;border-radius:9px;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);word-break:break-all}
+#pickBanner{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9997;display:none;
+  background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.5);color:var(--cyan);
+  font-family:var(--font-h);font-size:12px;font-weight:700;padding:8px 16px;border-radius:999px;
+  letter-spacing:.04em}
+#pickToast{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);z-index:9997;display:none;
+  max-width:70vw;background:rgba(255,192,0,.12);border:1px solid rgba(255,192,0,.5);color:var(--gold);
+  font-family:var(--font-b);font-size:12px;font-weight:600;line-height:1.5;padding:10px 16px;
+  border-radius:10px;word-break:break-all}
+#pickPanel{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:9998;display:none;
+  align-items:center;gap:10px;background:rgba(3,6,15,.95);border:1px solid rgba(255,192,0,.5);
+  color:var(--gold);font-family:var(--font-b);font-size:12px;font-weight:700;padding:8px 12px;
+  border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);white-space:nowrap}
+#pickPanel button{background:rgba(255,192,0,.14);border:1px solid rgba(255,192,0,.5);color:var(--gold);
+  border-radius:999px;padding:5px 12px;font-family:var(--font-b);font-size:12px;font-weight:700;cursor:pointer}
+#pickPanel button:hover{background:rgba(255,192,0,.32)}
+#pickPanel .danger{color:#F4F7FF;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08)}
+.slide-pick{position:absolute;top:14px;right:14px;z-index:9990;display:none;width:28px;height:28px;
+  border-radius:50%;background:rgba(3,6,15,.85);color:var(--gold);border:1px solid rgba(255,192,0,.5);
+  font-family:var(--font-h);font-size:16px;font-weight:800;line-height:1;cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.slide-pick.on{background:rgba(255,192,0,.95);color:#0B1A45}
+
+/* ============================================================================
+   FEATURE 3 — PDF EXPORT: 1 slide = 1 page (CSS)
+   ========================================================================== */
+@media print{
+  @page{size:1280px 720px;margin:0}
+  html,body{background:#fff;overflow:visible !important;height:auto;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #stage{position:static;display:block;inset:auto}
+  #deck{width:1280px;height:auto;transform:none !important;box-shadow:none;border-radius:0}
+  /* fixed box per slide: stops flex children collapsing and text spilling out */
+  .slide{position:relative;inset:auto;width:1280px !important;height:720px !important;
+    opacity:1 !important;visibility:visible !important;transform:none !important;
+    border-radius:0;page-break-after:always;break-after:page;
+    page-break-inside:avoid;break-inside:avoid}
+  .slide:last-child,.slide.print-last{page-break-after:auto;break-after:auto}
+  /* Chrome print uses font ascent+descent, not font-size*line-height:
+     big type inflates and overlaps the block below. Pin absolute px. */
+  .cover-title{font-size:54px !important;line-height:62px !important}
+  .cover-sub{font-size:17px !important;line-height:27px !important}
+  .shead h2{font-size:33px !important;line-height:40px !important}
+  .quote{font-size:19px !important;line-height:26px !important}
+  .ul li,.steps li{line-height:21px !important}
+  pre{line-height:20px !important}
+  .tbl td{line-height:18px !important}
+  /* chrome never prints */
+  #nav,#progress,#hint,#pickBar,#pickBtn,#pickMultiBtn,#pickTip,#pickBanner,
+  #pickPanel,#pickToast,#pdfToast,#partDl,#pdfBtn,.slide-pick,.nav-dots,
+  .spacer,button{display:none !important;visibility:hidden !important}
+  /* subset mode: only .print-keep slides print */
+  body.print-subset .slide{display:none !important}
+  body.print-subset .slide.print-keep{display:block !important}
+  /* last slide of a subset is NOT :last-of-type -> needs an explicit class */
+  body.print-subset .slide.print-keep.print-last,
+  body.print-subset .slide.print-keep:last-of-type{page-break-after:auto !important;break-after:auto !important}
+}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="deck">
+    <div id="progress"></div>
+
+    <!-- ===================== SLIDE 1 — cover ===================== -->
+    <section class="slide active" id="slide-1">
+      <div class="canvas">
+        <div class="cover">
+          <div class="kicker">HTML Deck Toolkit</div>
+          <h1 class="cover-title">An HTML deck you can<br>correct <em>precisely</em></h1>
+          <p class="cover-sub">Three features that turn "change the blue one" into an instruction a machine
+            can locate: <b>element picker</b>, <b>multi-picker</b>, and <b>PDF at 1 slide = 1 page</b>.</p>
+          <div class="chips"><span>0 dependencies</span><span>1 HTML file</span><span>Chrome print engine</span></div>
+        </div>
+        <div class="cover-foot">
+          <span>JudgeRozin / ai-presentation-html-deck-toolkit</span>
+          <span>1280 x 720 · 6 slides</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SLIDE 2 — the problem ===================== -->
+    <section class="slide" id="slide-2">
+      <div class="canvas">
+        <div class="shead">
+          <div class="eyebrow">01 · The problem</div>
+          <h2>Corrections fail in <em>language</em>, not in design</h2>
+        </div>
+        <div class="sbody wide">
+          <div class="card">
+            <div class="qlabel">What usually happens</div>
+            <p class="quote">“change the blue one, bottom right”</p>
+            <ul class="ul">
+              <li>The agent guesses a DOM path — and often <b>guesses wrong</b>.</li>
+              <li>Every wrong guess costs a full <b>render + QA round</b>.</li>
+              <li>No artifact proves <b>which element</b> was meant.</li>
+            </ul>
+          </div>
+          <div class="card tray">
+            <div class="qlabel">What a deck with a picker gives you</div>
+            <pre>[<span class="t">DECK-KIT</span>] slide 3 · div.pad &gt; article.card · text: "Element Picker" · size 276x216 · css: #slide-3 &gt; div.pad:nth-of-type(1) &gt; article.card:nth-of-type(2)</pre>
+            <ul class="locs">
+              <li><b>Slide number</b> — scopes the search to one section.</li>
+              <li><b>Readable path + text snippet</b> — a human can verify the target.</li>
+              <li><b>nth-of-type CSS path</b> — a machine can resolve it exactly.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SLIDE 3 — feature 1 ===================== -->
+    <section class="slide" id="slide-3">
+      <div class="canvas">
+        <div class="shead">
+          <div class="eyebrow">02 · Feature 1</div>
+          <h2>Element Picker — press <em>P</em></h2>
+        </div>
+        <div class="sbody wide">
+          <div class="card">
+            <div class="qlabel">Four steps, zero setup</div>
+            <ol class="steps">
+              <li>Press <kbd>P</kbd> (or click 🎯 Pick element). Cursor turns crosshair.</li>
+              <li>Hover: <b>cyan outline</b> + tooltip showing slide, DOM path and text.</li>
+              <li>Click: the reference is <b>copied to clipboard</b>, gold flash + toast.</li>
+              <li>Press <kbd>Esc</kbd> to exit. <kbd>P</kbd> toggles.</li>
+            </ol>
+            <ul class="ul">
+              <li>Picker chrome is excluded via <b>UI_SEL</b> — you never pick your own tool.</li>
+              <li>Click handler runs in <b>capture phase</b>, so deck navigation never fires on a pick.</li>
+            </ul>
+          </div>
+          <div class="card tray">
+            <div class="qlabel">Anatomy of one reference</div>
+            <pre>[<span class="t">DECK-KIT</span>] slide 3 · div.pad &gt; article.card · text: "Element Picker" · size 276x216 · css: #slide-3 &gt; div.pad:nth-of-type(1) &gt; article.card:nth-of-type(2)</pre>
+            <table class="tbl">
+              <tr><th>Part</th><th>Why it exists</th></tr>
+              <tr><td><b>DECK-KIT</b></td><td>Per-deck tag — traceable when several decks are open.</td></tr>
+              <tr><td><code>slide 3</code></td><td>Bounds the lookup to one section.</td></tr>
+              <tr><td><code>css:</code></td><td>Resolvable selector, disambiguated with <code>:nth-of-type()</code>.</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SLIDE 4 — feature 2 ===================== -->
+    <section class="slide" id="slide-4">
+      <div class="canvas">
+        <div class="shead">
+          <div class="eyebrow">03 · Feature 2</div>
+          <h2>Multi-picker — press <em>M</em></h2>
+        </div>
+        <div class="sbody wide">
+          <div class="card">
+            <div class="qlabel">Batch references in one paste</div>
+            <ol class="steps">
+              <li>Press <kbd>M</kbd> (or click 🔲 Multi-pick). A panel appears with a counter.</li>
+              <li>Click as many elements as you want — each gets a <b>gold ring</b>.</li>
+              <li>Or hit the <b>⊕ badge</b> in a slide corner to select that <b>whole section</b>.</li>
+              <li><b>Copy refs</b> copies the batch; <b>Clear</b> resets; <kbd>Esc</kbd> exits.</li>
+            </ol>
+            <ul class="ul">
+              <li>Refs are sorted in <b>DOM order</b> (<code>compareDocumentPosition</code>), not click order.</li>
+              <li>Section refs point at <code>#slide-N</code>, so "this whole slide" is one instruction.</li>
+            </ul>
+          </div>
+          <div class="card tray">
+            <div class="qlabel">What lands on the clipboard</div>
+            <pre><span class="g"># DECK-KIT multi-selection (3 refs)</span>
+[<span class="t">DECK-KIT</span>] slide 3 — SELURUH SECTION · Element Picker — press P · css: #slide-3
+[<span class="t">DECK-KIT</span>] slide 4 · div.pad &gt; article.card · text: "Copy refs (3)" · size 276x216 · css: #slide-4 &gt; div.pad:nth-of-type(1) &gt; article.card:nth-of-type(2)
+[<span class="t">DECK-KIT</span>] slide 5 · h2 &gt; span.hl · text: "1 slide = 1 page" · size 182x34 · css: #slide-5 &gt; div.shead:nth-of-type(1) &gt; h2:nth-of-type(1) &gt; span.hl:nth-of-type(1)</pre>
+            <ul class="locs">
+              <li>The header line states the <b>count</b> — the agent can assert nothing was dropped.</li>
+              <li>One paste = one revision pass, instead of N separate messages.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SLIDE 5 — feature 3 ===================== -->
+    <section class="slide" id="slide-5">
+      <div class="canvas">
+        <div class="shead">
+          <div class="eyebrow">04 · Feature 3</div>
+          <h2>PDF export — <em>1 slide = 1 page</em></h2>
+        </div>
+        <div class="sbody wide">
+          <div class="card">
+            <div class="qlabel">No generator, just print CSS</div>
+            <ul class="ul">
+              <li><b>⤓ PDF</b> button in the nav calls <code>window.print()</code>.</li>
+              <li><b>Unduh bagian…</b> dropdown prints a <b>subset</b> — page count still matches.</li>
+              <li><code>@page{size:1280px 720px}</code> — exact 16:9, no A4 white bars.</li>
+              <li><code>print-color-adjust:exact</code> — dark backgrounds survive without
+                ticking "Background graphics".</li>
+              <li>Slides are pinned to <b>720px</b> in print; flex children can't collapse.</li>
+            </ul>
+            <svg class="pgstack" viewBox="0 0 132 86" width="132" height="86" aria-hidden="true">
+              <rect x="22" y="2" width="86" height="50" rx="5" fill="rgba(34,211,238,.10)" stroke="rgba(34,211,238,.45)"/>
+              <rect x="11" y="12" width="86" height="50" rx="5" fill="rgba(34,211,238,.18)" stroke="rgba(34,211,238,.55)"/>
+              <rect x="0" y="22" width="86" height="50" rx="5" fill="#FFFFFF" stroke="#0891B2" stroke-width="1.5"/>
+              <text x="43" y="52" text-anchor="middle" font-family="Sora,sans-serif" font-size="14" font-weight="700" fill="#0B1A45">1 : 1</text>
+            </svg>
+          </div>
+          <div class="card tray">
+            <div class="qlabel">Proof, not vibes — tools/check_pdf_export.py</div>
+            <pre>@media print{
+  @page{size:1280px 720px;margin:0}
+  .slide{width:1280px!important;height:720px!important;
+    page-break-after:always;break-after:page}
+}</pre>
+            <table class="tbl">
+              <tr><th>Check</th><th>Expected</th></tr>
+              <tr><td><code>pdfinfo</code> page size</td><td><b>960 x 540 pts</b> = 1280×720 px</td></tr>
+              <tr><td><code>pdftoppm -r 96</code></td><td>exactly <b>1280×720</b> per page</td></tr>
+              <tr><td><code>pdftotext -bbox</code></td><td><b>0</b> words out of bounds, <b>0</b> collisions</td></tr>
+              <tr><td>empty pages</td><td><b>0</b> — the classic subset page-break bug</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SLIDE 6 — use it ===================== -->
+    <section class="slide" id="slide-6">
+      <div class="canvas">
+        <div class="shead">
+          <div class="eyebrow">05 · Use it</div>
+          <h2>Wire it into <em>your own</em> deck</h2>
+        </div>
+        <div class="sbody wide">
+          <div class="card">
+            <div class="qlabel">Three blocks, copy-paste</div>
+            <ol class="steps">
+              <li>Clone the repo and open <b>deck.html</b> in Chrome.</li>
+              <li>Copy the blocks marked <b>FEATURE 1 / 2 / 3</b> — CSS, DOM, JS.</li>
+              <li>Set your own <b>DECK_TAG</b> and list your deck chrome in <b>UI_SEL</b>.</li>
+              <li>Run the verifiers below; both must pass before you ship.</li>
+            </ol>
+            <pre>git clone git@github.com:JudgeRozin/ai-presentation-html-deck-toolkit.git
+python3 tools/check_deck.py deck.html --tag DECK-KIT
+python3 tools/check_pdf_export.py deck.html --expect 6</pre>
+          </div>
+          <div class="card tray">
+            <div class="qlabel">Keyboard map</div>
+            <table class="tbl">
+              <tr><th>Key</th><th>Action</th></tr>
+              <tr><td><kbd>←</kbd> <kbd>→</kbd> <kbd>space</kbd></td><td>Previous / next slide</td></tr>
+              <tr><td><kbd>P</kbd></td><td>Element picker — one precise ref</td></tr>
+              <tr><td><kbd>M</kbd></td><td>Multi-picker — batch refs + whole sections</td></tr>
+              <tr><td><kbd>Esc</kbd></td><td>Leave pick / multi-pick mode</td></tr>
+              <tr><td><b>⤓ PDF</b></td><td>Print dialog — save as PDF, 1 slide per page</td></tr>
+            </table>
+            <ul class="ul">
+              <li>P and M are ignored while you type in an input, and never steal <kbd>Cmd</kbd>+<kbd>P</kbd>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== deck chrome (never printed) ===================== -->
+    <div id="nav">
+      <button id="prev" aria-label="Previous slide">‹ Prev</button>
+      <button id="next" aria-label="Next slide">Next ›</button>
+      <div class="nav-dots" id="dots"></div>
+      <div class="spacer"></div>
+      <select id="partDl" aria-label="Export a section as PDF" title="Print only one section as PDF">
+        <option value="">Unduh bagian…</option>
+      </select>
+      <button id="pdfBtn" title="Print / save as PDF — 1 slide = 1 page, 1280x720">⤓ PDF</button>
+    </div>
+    <div id="hint">← → / spasi · P pick · M multi · ⤓ PDF</div>
+  </div>
+</div>
+<div id="pdfToast" role="status" aria-live="polite"></div>
+
+<!-- ============================================================================
+     FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (DOM)
+     ========================================================================== -->
+<div id="pickBar">
+  <button id="pickBtn" title="Element Picker (P)">🎯 Pick element</button>
+  <button id="pickMultiBtn" title="Multi-picker (M)">🔲 Multi-pick</button>
+</div>
+<div id="pickBanner">PICK MODE — klik elemen untuk copy referensi · Esc keluar</div>
+<div id="pickTip"></div>
+<div id="pickToast"></div>
+<div id="pickPanel">
+  <span id="pickCount">0 dipilih</span>
+  <button id="pickCopy">Copy refs</button>
+  <button id="pickClear" class="danger">Clear</button>
+  <button id="pickExit" class="danger">Exit</button>
+</div>
+
+<script>
+/* ============================================================================
+   DECK NAVIGATION + SCALING
+   ========================================================================== */
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dots = document.getElementById('dots');
+  const deck = document.getElementById('deck');
+  let idx = 0;
+
+  slides.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.setAttribute('aria-label', 'Slide ' + (i + 1));
+    b.addEventListener('click', () => go(i));
+    dots.appendChild(b);
+  });
+
+  function go(i){
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, n) => s.classList.toggle('active', n === idx));
+    Array.from(dots.children).forEach((d, n) => d.classList.toggle('active', n === idx));
+    document.getElementById('progress').style.width = ((idx + 1) / slides.length * 100) + '%';
+  }
+
+  document.getElementById('prev').addEventListener('click', () => go(idx - 1));
+  document.getElementById('next').addEventListener('click', () => go(idx + 1));
+
+  document.addEventListener('keydown', e => {
+    const t = e.target;
+    const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    if (typing) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown'){ e.preventDefault(); go(idx + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp'){ e.preventDefault(); go(idx - 1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End')  go(slides.length - 1);
+  });
+
+  let sx = null;
+  document.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 50) go(idx + (dx < 0 ? 1 : -1));
+    sx = null;
+  }, {passive:true});
+
+  function fit(){
+    const k = Math.min(window.innerWidth / 1280, window.innerHeight / 720) * 0.94;
+    deck.style.transform = 'scale(' + k + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  go(0);
+  // shared state for later blocks — never redeclare `slides` in another scope
+  window.__deck = { slides: slides, go: go, get idx(){ return idx; } };
+})();
+
+/* ============================================================================
+   FEATURE 3 — PDF EXPORT: 1 slide = 1 page
+   Reads slides from window.__deck: a block outside the nav IIFE cannot see it.
+   ========================================================================== */
+(function(){
+  const deck = window.__deck;
+  const slides = deck.slides;
+
+  // label + 1-based inclusive slide range for each exportable section
+  const PARTS = [
+    { label: 'Pembuka (1)',          from: 1, to: 1 },
+    { label: 'Fitur picker (3–4)',   from: 3, to: 4 },
+    { label: 'PDF (5)',              from: 5, to: 5 },
+    { label: 'Quick start (6)',      from: 6, to: 6 },
+    { label: 'Semua (6 halaman)',    from: 1, to: 6 }
+  ];
+
+  const sel = document.getElementById('partDl');
+  PARTS.forEach((p, i) => {
+    const o = document.createElement('option');
+    o.value = String(i); o.textContent = p.label;
+    sel.appendChild(o);
+  });
+
+  // NOT named toast(): the picker already owns a global `toast` (hoisting would
+  // make this one lose and the message would never show).
+  function pdfToast(msg){
+    const t = document.getElementById('pdfToast');
+    t.textContent = msg; t.style.display = 'block';
+    clearTimeout(pdfToast._t);
+    pdfToast._t = setTimeout(() => { t.style.display = 'none'; }, 2600);
+  }
+
+  function downloadPdf(){
+    pdfToast('Menyiapkan PDF — pilih "Save as PDF" di dialog cetak');
+    setTimeout(() => window.print(), 120);
+  }
+  document.getElementById('pdfBtn').addEventListener('click', e => { e.preventDefault(); downloadPdf(); });
+
+  sel.addEventListener('change', () => {
+    const v = sel.value;
+    if (v === '') return;
+    const p = PARTS[Number(v)];
+    if (!p) return;
+
+    document.body.classList.add('print-subset');
+    slides.forEach((s, i) => {
+      const n = i + 1;
+      s.classList.toggle('print-keep', n >= p.from && n <= p.to);
+      // the last kept slide is not :last-of-type -> mark it explicitly,
+      // otherwise the subset ends with a blank page
+      s.classList.toggle('print-last', n === p.to);
+    });
+
+    function clean(){
+      document.body.classList.remove('print-subset');
+      slides.forEach(s => s.classList.remove('print-keep', 'print-last'));
+      window.removeEventListener('afterprint', clean);
+      sel.value = '';
+    }
+    window.addEventListener('afterprint', clean);
+    pdfToast('Cetak ' + p.label + '…');
+    setTimeout(() => window.print(), 150);
+    setTimeout(clean, 60000);   // failsafe when afterprint never fires
+  });
+})();
+
+/* ============================================================================
+   FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (JS)
+   Keep this block LAST so the deck's own functions already exist.
+   [ADAPT] DECK_TAG  -> this deck's tag
+   [ADAPT] UI_SEL    -> everything that must never be pickable
+   ========================================================================== */
+const DECK_TAG = 'DECK-KIT';
+const pickBtn = document.getElementById('pickBtn');
+const pickMultiBtn = document.getElementById('pickMultiBtn');
+const pickTip = document.getElementById('pickTip');
+const pickBanner = document.getElementById('pickBanner');
+const pickToast = document.getElementById('pickToast');
+const pickPanel = document.getElementById('pickPanel');
+const pickCount = document.getElementById('pickCount');
+const pickCopy = document.getElementById('pickCopy');
+const pickClear = document.getElementById('pickClear');
+const pickExit = document.getElementById('pickExit');
+
+const UI_SEL = '#nav,#progress,#hint,#partDl,#pdfBtn,#pdfToast,.nav-dots,.spacer,' +
+  '#pickBar,#pickBtn,#pickMultiBtn,#pickTip,#pickBanner,#pickToast,#pickPanel,.slide-pick';
+
+let pickMode = false, pickHover = null, multiMode = false;
+const sel = new Set();         // individually picked elements
+const selSlides = new Set();   // whole slides picked via the ⊕ badge
+
+function elDesc(el){
+  const slide = el.closest('.slide');
+  const slideNo = slide ? slide.id.replace('slide-','') : '?';
+  const parts = []; let cur = el, depth = 0;
+  while (cur && !cur.classList.contains('canvas') && depth < 4){
+    let s = cur.tagName.toLowerCase();
+    if (cur.id && !cur.id.startsWith('slide')) s += '#' + cur.id;
+    else if (cur.className && typeof cur.className === 'string'){
+      const cs = cur.className.trim().split(/\s+/)
+        .filter(c => c !== 'pick-hover' && c !== 'pick-selected' && c !== 'pick-sel')
+        .slice(0,2).join('.');
+      if (cs) s += '.' + cs;
+    }
+    parts.unshift(s); cur = cur.parentElement; depth++;
+  }
+  const txt = (el.innerText || '').trim().replace(/\s+/g,' ').slice(0,90);
+  const r = el.getBoundingClientRect();
+  return { slideNo, path: parts.join(' > '), txt, size: Math.round(r.width)+'x'+Math.round(r.height) };
+}
+
+function cssPath(el){
+  const path = []; let cur = el;
+  while (cur && cur.nodeType === Node.ELEMENT_NODE && path.length < 6){
+    let s = cur.nodeName.toLowerCase();
+    if (cur.id){ s += '#' + cur.id; path.unshift(s); break; }
+    const cls = (cur.className && typeof cur.className === 'string')
+      ? cur.className.trim().split(/\s+/).filter(Boolean)
+          .filter(c => c !== 'pick-hover' && c !== 'pick-selected' && c !== 'pick-sel')
+      : [];
+    if (cls.length) s += '.' + cls[0];
+    let sib = cur, nth = 1;
+    while ((sib = sib.previousElementSibling)) { if (sib.nodeName === cur.nodeName) nth++; }
+    s += ':nth-of-type(' + nth + ')';
+    path.unshift(s); cur = cur.parentElement;
+  }
+  return path.join(' > ');
+}
+
+function buildRef(el){
+  const d = elDesc(el);
+  return '[' + DECK_TAG + '] slide ' + d.slideNo + ' · ' + d.path +
+    (d.txt ? ' · text: "' + d.txt + '"' : '') + ' · size ' + d.size + ' · css: ' + cssPath(el);
+}
+
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); ta.remove();
+}
+function copyText(text){
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  else fallbackCopy(text);
+}
+function toast(msg){
+  pickToast.textContent = msg; pickToast.style.display = 'block';
+  clearTimeout(pickToast._t);
+  pickToast._t = setTimeout(() => { pickToast.style.display = 'none'; }, 4200);
+}
+function domCmp(a, b){
+  if (a === b) return 0;
+  return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1;
+}
+function updatePickPanel(){
+  const n = sel.size + selSlides.size;
+  pickCount.textContent = n + ' dipilih';
+  pickCopy.textContent = 'Copy refs (' + n + ')';
+  pickCopy.disabled = n === 0;
+  pickCopy.style.opacity = pickCopy.disabled ? '.4' : '1';
+}
+function buildMultiRefs(){
+  const items = [];
+  for (const s of selSlides){
+    const no = s.id.replace('slide-','');
+    const h = s.querySelector('h1, h2, .kicker');
+    items.push({ node: s, line: '[' + DECK_TAG + '] slide ' + no + ' — SELURUH SECTION' +
+      (h ? ' · ' + h.innerText.trim().replace(/\s+/g,' ') : '') + ' · css: #' + s.id });
+  }
+  for (const el of sel) items.push({ node: el, line: buildRef(el) });
+  items.sort((a, b) => domCmp(a.node, b.node));   // DOM order, not click order
+  return ['# ' + DECK_TAG + ' multi-selection (' + items.length + ' refs)',
+          ...items.map(i => i.line)].join('\n');
+}
+function toggleSlideSel(slide){
+  const b = slide.querySelector('.slide-pick');
+  if (selSlides.has(slide)){ selSlides.delete(slide); if (b) b.classList.remove('on'); }
+  else { selSlides.add(slide); if (b) b.classList.add('on'); }
+  updatePickPanel();
+}
+function setPick(on){
+  if (on && multiMode) setMulti(false);
+  pickMode = on;
+  document.body.classList.toggle('pick-mode', on);
+  pickBanner.style.display = on ? 'block' : 'none';
+  pickBanner.textContent = 'PICK MODE — klik elemen untuk copy referensi · Esc keluar';
+  pickBtn.textContent = on ? '✕ Exit pick (Esc)' : '🎯 Pick element';
+  if (!on && pickHover){ pickHover.classList.remove('pick-hover'); pickHover = null; pickTip.style.display = 'none'; }
+}
+function setMulti(on){
+  if (on && pickMode && !multiMode) setPick(false);
+  multiMode = on; pickMode = on;
+  document.body.classList.toggle('pick-mode', on);
+  pickBanner.style.display = on ? 'block' : 'none';
+  pickBanner.textContent = 'MULTI-PICK — klik banyak elemen (⊕ pojok slide = seluruh section) · Copy refs buat batch · Esc keluar';
+  pickMultiBtn.textContent = on ? '✕ Exit multi (Esc)' : '🔲 Multi-pick';
+  pickBtn.textContent = on ? '✕ Exit (Esc)' : '🎯 Pick element';
+  pickPanel.style.display = on ? 'flex' : 'none';
+  document.querySelectorAll('.slide-pick').forEach(b => { b.style.display = on ? 'block' : 'none'; });
+  if (!on && pickHover){ pickHover.classList.remove('pick-hover'); pickHover = null; pickTip.style.display = 'none'; }
+}
+
+pickBtn.addEventListener('click', () => { if (multiMode) setMulti(false); else setPick(!pickMode); pickBtn.blur(); });
+pickMultiBtn.addEventListener('click', () => { setMulti(!multiMode); pickMultiBtn.blur(); });
+pickCopy.addEventListener('click', () => {
+  copyText(buildMultiRefs());
+  toast('✓ Copied ' + (sel.size + selSlides.size) + ' refs — paste ke Hermes');
+});
+pickClear.addEventListener('click', () => {
+  sel.forEach(el => el.classList.remove('pick-sel')); sel.clear();
+  selSlides.forEach(s => { const b = s.querySelector('.slide-pick'); if (b) b.classList.remove('on'); }); selSlides.clear();
+  updatePickPanel();
+});
+pickExit.addEventListener('click', () => setMulti(false));
+
+// one ⊕ badge per slide, appended by JS so adding/removing slides needs no markup edit
+document.querySelectorAll('.slide').forEach(s => {
+  const b = document.createElement('button');
+  b.className = 'slide-pick'; b.textContent = '+';
+  b.title = 'Pilih seluruh section slide ini';
+  b.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); toggleSlideSel(s); b.blur(); });
+  s.appendChild(b);
+});
+
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+  if (e.key === 'Escape'){ if (multiMode) setMulti(false); else if (pickMode) setPick(false); }
+  if ((e.key === 'p' || e.key === 'P') && !multiMode && !e.metaKey && !e.ctrlKey && !e.altKey && !typing) setPick(!pickMode);
+  if ((e.key === 'm' || e.key === 'M') && !e.metaKey && !e.ctrlKey && !e.altKey && !typing) setMulti(!multiMode);
+});
+document.addEventListener('mouseover', e => {
+  if (!pickMode || e.target.closest(UI_SEL)) return;
+  if (pickHover) pickHover.classList.remove('pick-hover');
+  pickHover = e.target;
+  pickHover.classList.add('pick-hover');
+  const d = elDesc(e.target);
+  pickTip.innerHTML = '<b>Slide ' + d.slideNo + '</b> · ' + d.path + (d.txt ? '<br>“' + d.txt + '”' : '');
+  pickTip.style.display = 'block';
+});
+document.addEventListener('mousemove', e => {
+  if (!pickMode) return;
+  pickTip.style.left = Math.min(e.clientX + 14, window.innerWidth - 380) + 'px';
+  pickTip.style.top = (e.clientY + 18) + 'px';
+});
+document.addEventListener('click', e => {
+  if (!pickMode || e.target.closest(UI_SEL)) return;
+  e.preventDefault(); e.stopPropagation();          // deck nav must not fire on a pick
+  const el = e.target;
+  el.classList.remove('pick-hover');
+  if (multiMode){
+    if (sel.has(el)){ sel.delete(el); el.classList.remove('pick-sel'); }
+    else { sel.add(el); el.classList.add('pick-sel'); }
+    updatePickPanel();
+    return;
+  }
+  el.classList.add('pick-selected');
+  setTimeout(() => el.classList.remove('pick-selected'), 1600);
+  const ref = buildRef(el);
+  copyText(ref);
+  toast('✓ Copied — paste ke Hermes: ' + ref);
+  setPick(false);
+}, true);
+</script>
+</body>
+</html>
