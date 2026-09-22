@@ -54,7 +54,7 @@ Two structural traps:
 
 ```css
 /* ============================================================================
-   ELEMENT PICKER / MULTI-PICKER (CSS)
+   FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (CSS)
    ========================================================================== */
 #pickBar{position:fixed;left:14px;bottom:12px;display:flex;align-items:center;gap:8px;z-index:9996}
 #pickBtn,#pickMultiBtn{position:static;border-radius:999px;padding:7px 14px;
@@ -121,9 +121,12 @@ crash (the picker simply does nothing, with no console error on some browsers).
 ## Step 3 — JS: paste as the LAST script block in the document
 
 ```js
-/* ===== element picker + multi-picker =====
+/* ============================================================================
+   FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (JS)
+   Keep this block LAST so the deck's own functions already exist.
    [ADAPT] DECK_TAG : uppercase deck name, e.g. 'Q3-REVIEW'. Prefixes every reference.
-   [ADAPT] UI_SEL   : add every piece of this deck's chrome that must not be pickable.  */
+   [ADAPT] UI_SEL   : add every piece of this deck's chrome that must not be pickable.
+   ========================================================================== */
 const DECK_TAG = 'DECK';
 const pickBtn = document.getElementById('pickBtn');
 const pickMultiBtn = document.getElementById('pickMultiBtn');
@@ -331,37 +334,47 @@ document.addEventListener('click', e => {
 Add this **inside the same `<style>`**, after the picker CSS:
 
 ```css
+   ========================================================================== */
 @media print{
-  @page{size:1280px 720px;margin:0}                 /* px, not A4: exact 16:9, no white bars */
-  html,body{background:#fff;overflow:visible!important;height:auto;
+  @page{size:1280px 720px;margin:0}
+  html,body{background:#fff;overflow:visible !important;height:auto;
     -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  #stage{position:static;display:block;inset:auto}   /* un-fix the scaling wrapper */
-  #deck{width:1280px;height:auto;transform:none!important;box-shadow:none;border-radius:0}
-  /* fixed page box per slide: without it, flex children shrink and text spills out */
-  .slide{position:relative;inset:auto;width:1280px!important;height:720px!important;
-    opacity:1!important;visibility:visible!important;transform:none!important;
+  #stage{position:static;display:block;inset:auto}
+  #deck{width:1280px;height:auto;transform:none !important;box-shadow:none;border-radius:0}
+  /* fixed box per slide: stops flex children collapsing and text spilling out */
+  .slide{position:relative;inset:auto;width:1280px !important;height:720px !important;
+    opacity:1 !important;visibility:visible !important;transform:none !important;
     border-radius:0;page-break-after:always;break-after:page;
     page-break-inside:avoid;break-inside:avoid}
   .slide:last-child,.slide.print-last{page-break-after:auto;break-after:auto}
-  /* Chrome's print engine sizes lines from font ascent+descent, not font-size*line-height.
-     Large type inflates and overlaps the block below it: pin absolute px. */
-  .cover-title{font-size:52px!important;line-height:62px!important}
-  .shead h2{font-size:33px!important;line-height:40px!important}
-  /* chrome must never print */
+  /* Chrome print uses font ascent+descent, not font-size*line-height:
+     big type inflates and overlaps the block below. Pin absolute px. */
+  .cover-title{font-size:52px !important;line-height:62px !important}
+  .cover-sub{font-size:17px !important;line-height:27px !important}
+  .shead h2{font-size:33px !important;line-height:40px !important}
+  .quote{font-size:19px !important;line-height:26px !important}
+  .ul li,.steps li{line-height:21px !important}
+  pre{line-height:20px !important}
+  .tbl td{line-height:18px !important}
+  /* chrome never prints */
   #nav,#progress,#hint,#pickBar,#pickBtn,#pickMultiBtn,#pickTip,#pickBanner,
-  #pickPanel,#pickToast,#pdfToast,.slide-pick,.nav-dots,button{
-    display:none!important;visibility:hidden!important}
-  /* subset export: only the marked slides print */
-  body.print-subset .slide{display:none!important}
-  body.print-subset .slide.print-keep{display:block!important}
-  body.print-subset .slide.print-keep.print-last{page-break-after:auto!important;break-after:auto!important}
+  #pickPanel,#pickToast,#pdfToast,#partDl,#pdfBtn,.slide-pick,.nav-dots,
+  .spacer,button{display:none !important;visibility:hidden !important}
+  /* subset mode: only .print-keep slides print */
+  body.print-subset .slide{display:none !important}
+  body.print-subset .slide.print-keep{display:block !important}
+  /* last slide of a subset is NOT :last-of-type -> needs an explicit class */
+  body.print-subset .slide.print-keep.print-last,
+  body.print-subset .slide.print-keep:last-of-type{page-break-after:auto !important;break-after:auto !important}
 }
 ```
 
 Then, as the **last** script block:
 
 ```js
-/* ===== PDF export: 1 slide = 1 page ===== */
+/* ============================================================================
+   FEATURE 3 — PDF EXPORT: 1 slide = 1 page (JS)
+   ========================================================================== */
 (function(){
   // Take the slide list from the deck, NOT from a local variable: a block outside the
   // deck's nav IIFE cannot see a `slides` declared inside it (ReferenceError).

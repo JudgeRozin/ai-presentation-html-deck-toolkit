@@ -136,44 +136,41 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 
 /* ============================================================================
    FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (CSS)
-   Everything from here to the end of the picker block is the feature itself.
    ========================================================================== */
 #pickBar{position:fixed;left:14px;bottom:12px;display:flex;align-items:center;gap:8px;z-index:9996}
 #pickBtn,#pickMultiBtn{position:static;border-radius:999px;padding:7px 14px;
-  font-family:var(--font-b);font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px)}
-#pickBtn{background:rgba(3,6,15,.85);color:var(--cyan);border:1px solid rgba(34,211,238,.45)}
+  font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px)}
+#pickBtn{background:rgba(3,6,15,.85);color:#22D3EE;border:1px solid rgba(34,211,238,.45)}
 #pickBtn:hover{background:rgba(34,211,238,.15)}
-#pickMultiBtn{background:rgba(3,6,15,.85);color:var(--gold);border:1px solid rgba(255,192,0,.45)}
+#pickMultiBtn{background:rgba(3,6,15,.85);color:#FFC000;border:1px solid rgba(255,192,0,.45)}
 #pickMultiBtn:hover{background:rgba(255,192,0,.15)}
 body.pick-mode,body.pick-mode *{cursor:crosshair !important}
-.pick-hover{outline:2px solid var(--cyan) !important;outline-offset:-2px !important}
-.pick-selected{outline:2.5px solid var(--gold) !important;outline-offset:-2px !important}
-.pick-sel{outline:2.5px solid var(--gold) !important;outline-offset:-2px !important;
+.pick-hover{outline:2px solid #22D3EE !important;outline-offset:-2px !important}
+.pick-selected{outline:2.5px solid #FFC000 !important;outline-offset:-2px !important}
+.pick-sel{outline:2.5px solid #FFC000 !important;outline-offset:-2px !important;
   box-shadow:0 0 0 4px rgba(255,192,0,.16) !important}
 #pickTip{position:fixed;z-index:9997;display:none;pointer-events:none;max-width:360px;
   background:rgba(3,6,15,.94);border:1px solid rgba(34,211,238,.45);color:#F4F7FF;
-  font-family:var(--font-b);font-size:12px;line-height:1.45;padding:7px 10px;border-radius:9px;
+  font-family:inherit;font-size:12px;line-height:1.45;padding:7px 10px;border-radius:9px;
   box-shadow:0 8px 24px rgba(0,0,0,.5);word-break:break-all}
 #pickBanner{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9997;display:none;
-  background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.5);color:var(--cyan);
-  font-family:var(--font-h);font-size:12px;font-weight:700;padding:8px 16px;border-radius:999px;
-  letter-spacing:.04em}
+  background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.5);color:#22D3EE;
+  font-size:12px;font-weight:700;padding:8px 16px;border-radius:999px;letter-spacing:.04em}
 #pickToast{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);z-index:9997;display:none;
-  max-width:70vw;background:rgba(255,192,0,.12);border:1px solid rgba(255,192,0,.5);color:var(--gold);
-  font-family:var(--font-b);font-size:12px;font-weight:600;line-height:1.5;padding:10px 16px;
-  border-radius:10px;word-break:break-all}
+  max-width:70vw;background:rgba(255,192,0,.12);border:1px solid rgba(255,192,0,.5);color:#FFC000;
+  font-size:12px;font-weight:600;line-height:1.5;padding:10px 16px;border-radius:10px;
+  word-break:break-all}
 #pickPanel{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:9998;display:none;
   align-items:center;gap:10px;background:rgba(3,6,15,.95);border:1px solid rgba(255,192,0,.5);
-  color:var(--gold);font-family:var(--font-b);font-size:12px;font-weight:700;padding:8px 12px;
-  border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);white-space:nowrap}
-#pickPanel button{background:rgba(255,192,0,.14);border:1px solid rgba(255,192,0,.5);color:var(--gold);
-  border-radius:999px;padding:5px 12px;font-family:var(--font-b);font-size:12px;font-weight:700;cursor:pointer}
+  color:#FFC000;font-size:12px;font-weight:700;padding:8px 12px;border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);white-space:nowrap}
+#pickPanel button{background:rgba(255,192,0,.14);border:1px solid rgba(255,192,0,.5);color:#FFC000;
+  border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
 #pickPanel button:hover{background:rgba(255,192,0,.32)}
 #pickPanel .danger{color:#F4F7FF;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.08)}
 .slide-pick{position:absolute;top:14px;right:14px;z-index:9990;display:none;width:28px;height:28px;
-  border-radius:50%;background:rgba(3,6,15,.85);color:var(--gold);border:1px solid rgba(255,192,0,.5);
-  font-family:var(--font-h);font-size:16px;font-weight:800;line-height:1;cursor:pointer;
-  box-shadow:0 4px 12px rgba(0,0,0,.35)}
+  border-radius:50%;background:rgba(3,6,15,.85);color:#FFC000;border:1px solid rgba(255,192,0,.5);
+  font-size:16px;font-weight:800;line-height:1;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.35)}
 .slide-pick.on{background:rgba(255,192,0,.95);color:#0B1A45}
 
 /* ============================================================================
@@ -193,7 +190,7 @@ body.pick-mode,body.pick-mode *{cursor:crosshair !important}
   .slide:last-child,.slide.print-last{page-break-after:auto;break-after:auto}
   /* Chrome print uses font ascent+descent, not font-size*line-height:
      big type inflates and overlaps the block below. Pin absolute px. */
-  .cover-title{font-size:54px !important;line-height:62px !important}
+  .cover-title{font-size:52px !important;line-height:62px !important}
   .cover-sub{font-size:17px !important;line-height:27px !important}
   .shead h2{font-size:33px !important;line-height:40px !important}
   .quote{font-size:19px !important;line-height:26px !important}
@@ -452,7 +449,6 @@ AGENTS.md    Codex / ChatGPT / Cursor
   <button id="pickClear" class="danger">Clear</button>
   <button id="pickExit" class="danger">Exit</button>
 </div>
-
 <script>
 /* ============================================================================
    DECK NAVIGATION + SCALING
@@ -581,8 +577,8 @@ AGENTS.md    Codex / ChatGPT / Cursor
 /* ============================================================================
    FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (JS)
    Keep this block LAST so the deck's own functions already exist.
-   [ADAPT] DECK_TAG  -> this deck's tag
-   [ADAPT] UI_SEL    -> everything that must never be pickable
+   [ADAPT] DECK_TAG : uppercase deck name, e.g. 'Q3-REVIEW'. Prefixes every reference.
+   [ADAPT] UI_SEL   : add every piece of this deck's chrome that must not be pickable.
    ========================================================================== */
 const DECK_TAG = 'DECK-KIT';
 const pickBtn = document.getElementById('pickBtn');
@@ -604,10 +600,10 @@ const sel = new Set();         // individually picked elements
 const selSlides = new Set();   // whole slides picked via the ⊕ badge
 
 function elDesc(el){
-  const slide = el.closest('.slide');
-  const slideNo = slide ? slide.id.replace('slide-','') : '?';
+  const slide = el.closest('.slide');                       // [ADAPT] slide container
+  const slideNo = slide ? slide.id.replace('slide-','') : '?';   // [ADAPT] id pattern
   const parts = []; let cur = el, depth = 0;
-  while (cur && !cur.classList.contains('canvas') && depth < 4){
+  while (cur && !cur.classList.contains('canvas') && depth < 4){  // [ADAPT] canvas class
     let s = cur.tagName.toLowerCase();
     if (cur.id && !cur.id.startsWith('slide')) s += '#' + cur.id;
     else if (cur.className && typeof cur.className === 'string'){
@@ -676,7 +672,7 @@ function updatePickPanel(){
 function buildMultiRefs(){
   const items = [];
   for (const s of selSlides){
-    const no = s.id.replace('slide-','');
+    const no = s.id.replace('slide-','');                   // [ADAPT] id pattern
     const h = s.querySelector('h1, h2, .kicker');
     items.push({ node: s, line: '[' + DECK_TAG + '] slide ' + no + ' — WHOLE SECTION' +
       (h ? ' · ' + h.innerText.trim().replace(/\s+/g,' ') : '') + ' · css: #' + s.id });
@@ -728,7 +724,7 @@ pickClear.addEventListener('click', () => {
 pickExit.addEventListener('click', () => setMulti(false));
 
 // one ⊕ badge per slide, appended by JS so adding/removing slides needs no markup edit
-document.querySelectorAll('.slide').forEach(s => {
+document.querySelectorAll('.slide').forEach(s => {          // [ADAPT] slide container
   const b = document.createElement('button');
   b.className = 'slide-pick'; b.textContent = '+';
   b.title = 'Select this whole slide';
