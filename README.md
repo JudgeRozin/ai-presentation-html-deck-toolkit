@@ -50,6 +50,14 @@ A multi-pick batch starts with a count header (`# DECK-KIT multi-selection (3 re
 references in **DOM order**, so the paste reads like the deck and the receiving agent can assert
 nothing was dropped.
 
+The reference above points at a `<b>` inside a dark card — which is how the deck's own 1.12:1
+contrast bug was found. That measurement, and the two fixes it produced, are in
+[`SKILL.md` §4](skills/implement-slide-tools/SKILL.md).
+
+| What the picker gives you | The PDF export |
+|---|---|
+| ![Slide 2: the reference anatomy, with the three locators on a dark card](docs/img/slide-2-problem.jpg) | ![Slide 5: the print CSS recipe and the checks that prove one page per slide](docs/img/pdf-slide.jpg) |
+
 ---
 
 ## For AI agents
@@ -91,6 +99,8 @@ Trigger phrase: **`/implement-slide-tools`**.
    the deck names them differently.
 4. Checks it by hand: <kbd>P</kbd> copies a reference, <kbd>M</kbd> batches, <kbd>⤓ PDF</kbd> yields
    one page per slide with no chrome printed.
+
+![Slide 6: the three blocks, the file trio and the keyboard map](docs/img/quickstart.jpg)
 
 ## Repository contents
 
