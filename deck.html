@@ -363,7 +363,7 @@ body.pick-mode,body.pick-mode *{cursor:crosshair !important}
             </svg>
           </div>
           <div class="card tray">
-            <div class="qlabel">Proof, not vibes — tools/check_pdf_export.py</div>
+            <div class="qlabel">Proof, not vibes</div>
             <pre>@media print{
   @page{size:1280px 720px;margin:0}
   .slide{width:1280px!important;height:720px!important;
@@ -373,8 +373,8 @@ body.pick-mode,body.pick-mode *{cursor:crosshair !important}
               <tr><th>Check</th><th>Expected</th></tr>
               <tr><td><code>pdfinfo</code> page size</td><td><b>960 x 540 pts</b> = 1280×720 px</td></tr>
               <tr><td><code>pdftoppm -r 96</code></td><td>exactly <b>1280×720</b> per page</td></tr>
-              <tr><td><code>pdftotext -bbox</code></td><td><b>0</b> words out of bounds, <b>0</b> collisions</td></tr>
-              <tr><td>empty pages</td><td><b>0</b> — the classic subset page-break bug</td></tr>
+              <tr><td>pages in the file</td><td><b>one per slide</b> — never a blank trailing page</td></tr>
+              <tr><td>in the PDF</td><td>no nav, hint or picker chrome printed</td></tr>
             </table>
           </div>
         </div>
@@ -385,21 +385,22 @@ body.pick-mode,body.pick-mode *{cursor:crosshair !important}
     <section class="slide" id="slide-6">
       <div class="canvas">
         <div class="shead">
-          <div class="eyebrow">05 · Use it</div>
+          <div class="eyebrow">05 · For your agent</div>
           <h2>Wire it into <em>your own</em> deck</h2>
         </div>
         <div class="sbody wide">
           <div class="card">
             <div class="qlabel">Three blocks, copy-paste</div>
             <ol class="steps">
-              <li>Clone the repo and open <b>deck.html</b> in Chrome.</li>
-              <li>Copy the blocks marked <b>FEATURE 1 / 2 / 3</b> — CSS, DOM, JS.</li>
-              <li>Set your own <b>DECK_TAG</b> and list your deck chrome in <b>UI_SEL</b>.</li>
-              <li>Run the verifiers below; both must pass before you ship.</li>
+              <li>Point your agent at this repo and call <b>/implement-slide-tools</b>.</li>
+              <li>It reads the deck first — slide container, canvas, chrome.</li>
+              <li>Then pastes the <b>three blocks</b>: CSS, DOM, JS — plus the print CSS.</li>
+              <li>Adapt <b>DECK_TAG</b>, extend <b>UI_SEL</b>, done.</li>
             </ol>
-            <pre>git clone git@github.com:JudgeRozin/ai-presentation-html-deck-toolkit.git
-python3 tools/check_deck.py deck.html --tag DECK-KIT
-python3 tools/check_pdf_export.py deck.html --expect 6</pre>
+            <pre>SKILL.md     Claude Skill / OpenClaw
+CLAUDE.md    Claude Code
+AGENTS.md    Codex / ChatGPT / Cursor
+             — three names, one identical guide</pre>
           </div>
           <div class="card tray">
             <div class="qlabel">Keyboard map</div>
