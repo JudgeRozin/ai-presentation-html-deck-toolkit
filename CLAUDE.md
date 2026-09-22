@@ -104,11 +104,11 @@ being added or removed.
   <button id="pickBtn" title="Element Picker (P)">🎯 Pick element</button>
   <button id="pickMultiBtn" title="Multi-picker (M)">🔲 Multi-pick</button>
 </div>
-<div id="pickBanner">PICK MODE — klik elemen untuk copy referensi · Esc keluar</div>
+<div id="pickBanner">PICK MODE — click an element to copy its reference · Esc to exit</div>
 <div id="pickTip"></div>
 <div id="pickToast"></div>
 <div id="pickPanel">
-  <span id="pickCount">0 dipilih</span>
+  <span id="pickCount">0 selected</span>
   <button id="pickCopy">Copy refs</button>
   <button id="pickClear" class="danger">Clear</button>
   <button id="pickExit" class="danger">Exit</button>
@@ -208,7 +208,7 @@ function domCmp(a, b){
 }
 function updatePickPanel(){
   const n = sel.size + selSlides.size;
-  pickCount.textContent = n + ' dipilih';
+  pickCount.textContent = n + ' selected';
   pickCopy.textContent = 'Copy refs (' + n + ')';
   pickCopy.disabled = n === 0;
   pickCopy.style.opacity = pickCopy.disabled ? '.4' : '1';
@@ -218,7 +218,7 @@ function buildMultiRefs(){
   for (const s of selSlides){
     const no = s.id.replace('slide-','');                   // [ADAPT] id pattern
     const h = s.querySelector('h1, h2, .kicker');
-    items.push({ node: s, line: '[' + DECK_TAG + '] slide ' + no + ' — SELURUH SECTION' +
+    items.push({ node: s, line: '[' + DECK_TAG + '] slide ' + no + ' — WHOLE SECTION' +
       (h ? ' · ' + h.innerText.trim().replace(/\s+/g,' ') : '') + ' · css: #' + s.id });
   }
   for (const el of sel) items.push({ node: el, line: buildRef(el) });
@@ -237,7 +237,7 @@ function setPick(on){
   pickMode = on;
   document.body.classList.toggle('pick-mode', on);
   pickBanner.style.display = on ? 'block' : 'none';
-  pickBanner.textContent = 'PICK MODE — klik elemen untuk copy referensi · Esc keluar';
+  pickBanner.textContent = 'PICK MODE — click an element to copy its reference · Esc to exit';
   pickBtn.textContent = on ? '✕ Exit pick (Esc)' : '🎯 Pick element';
   if (!on && pickHover){ pickHover.classList.remove('pick-hover'); pickHover = null; pickTip.style.display = 'none'; }
 }
@@ -246,7 +246,7 @@ function setMulti(on){
   multiMode = on; pickMode = on;
   document.body.classList.toggle('pick-mode', on);
   pickBanner.style.display = on ? 'block' : 'none';
-  pickBanner.textContent = 'MULTI-PICK — klik banyak elemen (⊕ pojok slide = seluruh section) · Copy refs buat batch · Esc keluar';
+  pickBanner.textContent = 'MULTI-PICK — click as many elements as you want (⊕ in a slide corner selects the whole section) · Copy refs for the batch · Esc to exit';
   pickMultiBtn.textContent = on ? '✕ Exit multi (Esc)' : '🔲 Multi-pick';
   pickBtn.textContent = on ? '✕ Exit (Esc)' : '🎯 Pick element';
   pickPanel.style.display = on ? 'flex' : 'none';
@@ -258,7 +258,7 @@ pickBtn.addEventListener('click', () => { if (multiMode) setMulti(false); else s
 pickMultiBtn.addEventListener('click', () => { setMulti(!multiMode); pickMultiBtn.blur(); });
 pickCopy.addEventListener('click', () => {
   copyText(buildMultiRefs());
-  toast('✓ Copied ' + (sel.size + selSlides.size) + ' refs — paste ke Hermes');
+  toast('✓ Copied ' + (sel.size + selSlides.size) + ' refs — paste into your agent chat');
 });
 pickClear.addEventListener('click', () => {
   sel.forEach(el => el.classList.remove('pick-sel')); sel.clear();
@@ -271,7 +271,7 @@ pickExit.addEventListener('click', () => setMulti(false));
 document.querySelectorAll('.slide').forEach(s => {          // [ADAPT] slide container
   const b = document.createElement('button');
   b.className = 'slide-pick'; b.textContent = '+';
-  b.title = 'Pilih seluruh section slide ini';
+  b.title = 'Select this whole slide';
   b.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); toggleSlideSel(s); b.blur(); });
   s.appendChild(b);
 });
@@ -312,7 +312,7 @@ document.addEventListener('click', e => {
   setTimeout(() => el.classList.remove('pick-selected'), 1600);
   const ref = buildRef(el);
   copyText(ref);
-  toast('✓ Copied — paste ke Hermes: ' + ref);
+  toast('✓ Copied — paste into your agent chat: ' + ref);
   setPick(false);
 }, true);
 ```
@@ -369,7 +369,7 @@ Then, as the **last** script block:
   const slides = deck ? deck.slides : Array.from(document.querySelectorAll('.slide'));
 
   const PARTS = [
-    { label: 'Semua', from: 1, to: slides.length }        // [ADAPT] your section ranges
+    { label: 'All slides', from: 1, to: slides.length }   // [ADAPT] your section ranges
   ];
   const sel = document.getElementById('partDl');          // [ADAPT] dropdown id
   PARTS.forEach((p, i) => {
@@ -387,7 +387,7 @@ Then, as the **last** script block:
     pdfToast._t = setTimeout(() => { t.style.display = 'none'; }, 2600);
   }
   function downloadPdf(){
-    pdfToast('Menyiapkan PDF — pilih "Save as PDF" di dialog cetak');
+    pdfToast('Preparing PDF — choose "Save as PDF" in the print dialog');
     setTimeout(() => window.print(), 120);
   }
   document.getElementById('pdfBtn').addEventListener('click', e => { e.preventDefault(); downloadPdf(); });
@@ -411,7 +411,7 @@ Then, as the **last** script block:
       sel.value = '';
     }
     window.addEventListener('afterprint', clean);
-    pdfToast('Cetak ' + p.label + '…');
+    pdfToast('Printing ' + p.label + '…');
     setTimeout(() => window.print(), 150);
     setTimeout(clean, 60000);   // failsafe when afterprint never fires
   });
@@ -421,7 +421,7 @@ Then, as the **last** script block:
 Plus two small pieces of markup in the nav:
 
 ```html
-<select id="partDl" aria-label="Export a section as PDF"><option value="">Unduh bagian…</option></select>
+<select id="partDl" aria-label="Export a section as PDF"><option value="">Export a section…</option></select>
 <button id="pdfBtn" title="Print / save as PDF — 1 slide = 1 page, 1280x720">⤓ PDF</button>
 <div id="pdfToast" role="status" aria-live="polite"></div>
 ```
@@ -480,7 +480,7 @@ Multi-select batches start with a count header, then one reference per line in D
 
 ```
 # DECK-TAG multi-selection (3 refs)
-[DECK-TAG] slide 2 — SELURUH SECTION · Corrections fail in language · css: #slide-2
+[DECK-TAG] slide 2 — WHOLE SECTION · Corrections fail in language · css: #slide-2
 [DECK-TAG] slide 3 · ol.steps > li · text: "Hover: cyan outline…" · size 512x42 · css: #slide-3 > … > li:nth-of-type(2)
 ```
 

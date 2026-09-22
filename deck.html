@@ -325,7 +325,7 @@ body.pick-mode,body.pick-mode *{cursor:crosshair !important}
           <div class="card tray">
             <div class="qlabel">What lands on the clipboard</div>
             <pre><span class="g"># DECK-KIT multi-selection (3 refs)</span>
-[<span class="t">DECK-KIT</span>] slide 3 — SELURUH SECTION · Element Picker — press P · css: #slide-3
+[<span class="t">DECK-KIT</span>] slide 3 — WHOLE SECTION · Element Picker — press P · css: #slide-3
 [<span class="t">DECK-KIT</span>] slide 4 · div.pad &gt; article.card · text: "Copy refs (3)" · size 276x216 · css: #slide-4 &gt; div.pad:nth-of-type(1) &gt; article.card:nth-of-type(2)
 [<span class="t">DECK-KIT</span>] slide 5 · h2 &gt; span.hl · text: "1 slide = 1 page" · size 182x34 · css: #slide-5 &gt; div.shead:nth-of-type(1) &gt; h2:nth-of-type(1) &gt; span.hl:nth-of-type(1)</pre>
             <ul class="locs">
@@ -349,7 +349,7 @@ body.pick-mode,body.pick-mode *{cursor:crosshair !important}
             <div class="qlabel">No generator, just print CSS</div>
             <ul class="ul">
               <li><b>⤓ PDF</b> button in the nav calls <code>window.print()</code>.</li>
-              <li><b>Unduh bagian…</b> dropdown prints a <b>subset</b> — page count still matches.</li>
+              <li><b>Export a section…</b> dropdown prints a <b>subset</b> — page count still matches.</li>
               <li><code>@page{size:1280px 720px}</code> — exact 16:9, no A4 white bars.</li>
               <li><code>print-color-adjust:exact</code> — dark backgrounds survive without
                 ticking "Background graphics".</li>
@@ -427,11 +427,11 @@ AGENTS.md    Codex / ChatGPT / Cursor
       <div class="nav-dots" id="dots"></div>
       <div class="spacer"></div>
       <select id="partDl" aria-label="Export a section as PDF" title="Print only one section as PDF">
-        <option value="">Unduh bagian…</option>
+        <option value="">Export a section…</option>
       </select>
       <button id="pdfBtn" title="Print / save as PDF — 1 slide = 1 page, 1280x720">⤓ PDF</button>
     </div>
-    <div id="hint">← → / spasi · P pick · M multi · ⤓ PDF</div>
+    <div id="hint">← → / space · P pick · M multi · ⤓ PDF</div>
   </div>
 </div>
 <div id="pdfToast" role="status" aria-live="polite"></div>
@@ -443,11 +443,11 @@ AGENTS.md    Codex / ChatGPT / Cursor
   <button id="pickBtn" title="Element Picker (P)">🎯 Pick element</button>
   <button id="pickMultiBtn" title="Multi-picker (M)">🔲 Multi-pick</button>
 </div>
-<div id="pickBanner">PICK MODE — klik elemen untuk copy referensi · Esc keluar</div>
+<div id="pickBanner">PICK MODE — click an element to copy its reference · Esc to exit</div>
 <div id="pickTip"></div>
 <div id="pickToast"></div>
 <div id="pickPanel">
-  <span id="pickCount">0 dipilih</span>
+  <span id="pickCount">0 selected</span>
   <button id="pickCopy">Copy refs</button>
   <button id="pickClear" class="danger">Clear</button>
   <button id="pickExit" class="danger">Exit</button>
@@ -521,11 +521,11 @@ AGENTS.md    Codex / ChatGPT / Cursor
 
   // label + 1-based inclusive slide range for each exportable section
   const PARTS = [
-    { label: 'Pembuka (1)',          from: 1, to: 1 },
-    { label: 'Fitur picker (3–4)',   from: 3, to: 4 },
-    { label: 'PDF (5)',              from: 5, to: 5 },
-    { label: 'Quick start (6)',      from: 6, to: 6 },
-    { label: 'Semua (6 halaman)',    from: 1, to: 6 }
+    { label: 'Opening (1)',           from: 1, to: 1 },
+    { label: 'Picker features (3–4)', from: 3, to: 4 },
+    { label: 'PDF export (5)',        from: 5, to: 5 },
+    { label: 'Quick start (6)',       from: 6, to: 6 },
+    { label: 'All slides (6 pages)',  from: 1, to: 6 }
   ];
 
   const sel = document.getElementById('partDl');
@@ -545,7 +545,7 @@ AGENTS.md    Codex / ChatGPT / Cursor
   }
 
   function downloadPdf(){
-    pdfToast('Menyiapkan PDF — pilih "Save as PDF" di dialog cetak');
+    pdfToast('Preparing PDF — choose "Save as PDF" in the print dialog');
     setTimeout(() => window.print(), 120);
   }
   document.getElementById('pdfBtn').addEventListener('click', e => { e.preventDefault(); downloadPdf(); });
@@ -572,7 +572,7 @@ AGENTS.md    Codex / ChatGPT / Cursor
       sel.value = '';
     }
     window.addEventListener('afterprint', clean);
-    pdfToast('Cetak ' + p.label + '…');
+    pdfToast('Printing ' + p.label + '…');
     setTimeout(() => window.print(), 150);
     setTimeout(clean, 60000);   // failsafe when afterprint never fires
   });
@@ -668,7 +668,7 @@ function domCmp(a, b){
 }
 function updatePickPanel(){
   const n = sel.size + selSlides.size;
-  pickCount.textContent = n + ' dipilih';
+  pickCount.textContent = n + ' selected';
   pickCopy.textContent = 'Copy refs (' + n + ')';
   pickCopy.disabled = n === 0;
   pickCopy.style.opacity = pickCopy.disabled ? '.4' : '1';
@@ -678,7 +678,7 @@ function buildMultiRefs(){
   for (const s of selSlides){
     const no = s.id.replace('slide-','');
     const h = s.querySelector('h1, h2, .kicker');
-    items.push({ node: s, line: '[' + DECK_TAG + '] slide ' + no + ' — SELURUH SECTION' +
+    items.push({ node: s, line: '[' + DECK_TAG + '] slide ' + no + ' — WHOLE SECTION' +
       (h ? ' · ' + h.innerText.trim().replace(/\s+/g,' ') : '') + ' · css: #' + s.id });
   }
   for (const el of sel) items.push({ node: el, line: buildRef(el) });
@@ -697,7 +697,7 @@ function setPick(on){
   pickMode = on;
   document.body.classList.toggle('pick-mode', on);
   pickBanner.style.display = on ? 'block' : 'none';
-  pickBanner.textContent = 'PICK MODE — klik elemen untuk copy referensi · Esc keluar';
+  pickBanner.textContent = 'PICK MODE — click an element to copy its reference · Esc to exit';
   pickBtn.textContent = on ? '✕ Exit pick (Esc)' : '🎯 Pick element';
   if (!on && pickHover){ pickHover.classList.remove('pick-hover'); pickHover = null; pickTip.style.display = 'none'; }
 }
@@ -706,7 +706,7 @@ function setMulti(on){
   multiMode = on; pickMode = on;
   document.body.classList.toggle('pick-mode', on);
   pickBanner.style.display = on ? 'block' : 'none';
-  pickBanner.textContent = 'MULTI-PICK — klik banyak elemen (⊕ pojok slide = seluruh section) · Copy refs buat batch · Esc keluar';
+  pickBanner.textContent = 'MULTI-PICK — click as many elements as you want (⊕ in a slide corner selects the whole section) · Copy refs for the batch · Esc to exit';
   pickMultiBtn.textContent = on ? '✕ Exit multi (Esc)' : '🔲 Multi-pick';
   pickBtn.textContent = on ? '✕ Exit (Esc)' : '🎯 Pick element';
   pickPanel.style.display = on ? 'flex' : 'none';
@@ -718,7 +718,7 @@ pickBtn.addEventListener('click', () => { if (multiMode) setMulti(false); else s
 pickMultiBtn.addEventListener('click', () => { setMulti(!multiMode); pickMultiBtn.blur(); });
 pickCopy.addEventListener('click', () => {
   copyText(buildMultiRefs());
-  toast('✓ Copied ' + (sel.size + selSlides.size) + ' refs — paste ke Hermes');
+  toast('✓ Copied ' + (sel.size + selSlides.size) + ' refs — paste into your agent chat');
 });
 pickClear.addEventListener('click', () => {
   sel.forEach(el => el.classList.remove('pick-sel')); sel.clear();
@@ -731,7 +731,7 @@ pickExit.addEventListener('click', () => setMulti(false));
 document.querySelectorAll('.slide').forEach(s => {
   const b = document.createElement('button');
   b.className = 'slide-pick'; b.textContent = '+';
-  b.title = 'Pilih seluruh section slide ini';
+  b.title = 'Select this whole slide';
   b.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); toggleSlideSel(s); b.blur(); });
   s.appendChild(b);
 });
@@ -772,7 +772,7 @@ document.addEventListener('click', e => {
   setTimeout(() => el.classList.remove('pick-selected'), 1600);
   const ref = buildRef(el);
   copyText(ref);
-  toast('✓ Copied — paste ke Hermes: ' + ref);
+  toast('✓ Copied — paste into your agent chat: ' + ref);
   setPick(false);
 }, true);
 </script>

@@ -38,7 +38,7 @@ body.print-subset .slide.print-keep.print-last{page-break-after:auto!important;b
 "Background graphics" in the print dialog — the difference between a designed deck and a white PDF
 with pale text.
 
-### Subset export ("Unduh bagian…")
+### Subset export ("Export a section…")
 
 ```js
 document.body.classList.add('print-subset');
