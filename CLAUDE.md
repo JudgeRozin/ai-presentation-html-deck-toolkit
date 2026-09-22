@@ -493,17 +493,6 @@ Multi-select batches start with a count header, then one reference per line in D
 4. **For a `multi-selection (N refs)` batch:** apply all N, then confirm the count so nothing is
    silently dropped.
 
-## Before you hand the deck over
-
-- [ ] <kbd>P</kbd> enters pick mode; hovering shows the cyan outline and the tooltip; a click copies
-      a reference and exits pick mode.
-- [ ] <kbd>M</kbd> shows the panel and one ⊕ badge per slide; picking two elements plus one whole
-      slide then **Copy refs** emits a `(3 refs)` header and three lines in DOM order.
-- [ ] The picker's own buttons and the deck's nav **cannot** be picked.
-- [ ] <kbd>⤓ PDF</kbd> → page count equals slide count, every page 1280×720, no nav or hint printed,
-      no blank trailing page.
-- [ ] Nothing on the deck broke: navigation, dots and keyboard still work with the picker installed.
-
 ## Reference decks
 
 `deck.html` in this repository is a working 6-slide deck with all three features installed, and its
