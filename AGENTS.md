@@ -1,11 +1,17 @@
 ---
 name: implement-slide-tools
 description: Use when an HTML slide deck needs an element picker, a multi-picker, or PDF export (1 slide = 1 page) — building a new deck or adding the features to an existing one. Trigger on "/implement-slide-tools".
+license: MIT
+metadata:
+  version: "1.0"
 ---
 
-# Implement slide tools in an HTML deck
+# Implement Slide Tools
 
-Three features, one HTML file, no dependencies, no build step, no libraries:
+Give an HTML deck three features that make it correctable: an **element picker**, a
+**multi-picker**, and **PDF export at 1 slide = 1 page**.
+
+One HTML file. No dependencies, no build step, no libraries.
 
 | Feature | Trigger | What it does |
 |---|---|---|
@@ -13,46 +19,129 @@ Three features, one HTML file, no dependencies, no build step, no libraries:
 | Multi-picker | <kbd>M</kbd> | Select many elements, or a whole slide → copies one batch |
 | PDF export | nav button | `window.print()` → 1 slide = 1 page, 1280×720, backgrounds intact |
 
-A working deck with all three installed is in `deck.html`. This document is the
-implementation guide: read it, then paste the three blocks below into the target deck.
+The user points at an element; the deck copies a reference an agent can resolve exactly.
+That loop — point, paste, fix — is the whole product.
 
-## When to use this
+---
 
-- The user asks for a new HTML deck / presentation ("bikin deck", "slide HTML", "presentasi").
-- The user has an existing HTML deck and wants the picker or the PDF export added.
-- The user pastes a `[DECK-TAG] slide N · …` reference — that is the picker's output, and the
-  agent-side contract at the end of this file explains what to do with it.
+## 0. Before you paste — read the deck
 
-## Why the picker is not optional
+**Do not paste blind.** Open the target deck's HTML and establish three facts. A paste
+that assumes the wrong structure fails silently: the picker loads, does nothing, and
+logs nothing.
 
-The user reviews a rendered deck with their eyes and corrects it by pointing at things. Without a
-picker, every correction is a guess at a DOM path — *"the blue box, bottom right"* — and a wrong
-guess costs a full render-and-review round. The picker turns a vague instruction into a reference
-that a script can resolve exactly. Install it **before** handing a deck over, not after the first
-misunderstanding.
-
-## Step 0 — inspect the deck first
-
-Do not paste blind. Read the deck's HTML and establish three facts:
-
-| Fact | Why it matters | This toolkit's assumption |
+| Fact | Why it matters | Assumed default |
 |---|---|---|
-| Slide container | Bounds the readable path and yields the slide number | `<section class="slide" id="slide-N">` |
+| Slide container | Bounds the readable path; yields the slide number | `<section class="slide" id="slide-N">` |
 | Canvas element | Where the readable path stops | `.canvas` |
-| Deck chrome | What must never be pickable | `#nav`, `.nav-dots`, `#hint`, `#progress`, buttons |
+| Deck chrome | Everything that must never be pickable | `#nav`, `.nav-dots`, `#hint`, `#progress`, buttons |
 
 Two structural traps:
 
-- **Slide ids must be `slide-N`.** The picker derives the slide number with
-  `slide.id.replace('slide-','')`. If the deck uses `id="s1"`, adapt that line to
-  `id.replace(/^s/,'')` — or rename the ids, which is usually cleaner.
-- **`.slide` and `.canvas` may not exist.** If the deck uses other names, change the two references
-  in the picker JS (`el.closest('.slide')`, `cur.classList.contains('canvas')`). If there is no
-  canvas wrapper at all, point it at the slide container itself.
+- **Slide ids must be `slide-N`.** The slide number comes from
+  `slide.id.replace('slide-','')`. A deck using `id="s1"` needs either that line changed to
+  `id.replace(/^s/,'')` or the ids renamed — renaming is usually cleaner.
+- **`.slide` and `.canvas` may be named something else.** If so, change the two references in
+  the picker JS (`el.closest('.slide')`, `cur.classList.contains('canvas')`). With no canvas
+  wrapper at all, point it at the slide container itself.
 
-## Step 1 — CSS: paste inside the deck's last `<style>`
+---
+
+## 1. Philosophy
+
+**A correction is only as precise as the reference you can give.**
+
+The user reviews a rendered deck with their eyes and corrects it by pointing. Without a picker
+every correction is a guess at a DOM path — *"the blue box, bottom right"* — and a wrong guess
+costs a full render-and-review round. The picker converts a vague instruction into a reference
+that resolves to exactly one element.
+
+Install it **before** handing a deck over, not after the first misunderstanding.
+
+**The reference must survive a reload.** A path that only resolves while the element is still
+highlighted is not a reference. That single constraint drives most of the rules in §7.
+
+---
+
+## 2. When to use — and when not to
+
+**Use for:**
+
+- A new HTML deck or presentation, before it goes to a reviewer.
+- An existing deck that keeps coming back with vague change requests.
+- A pasted `[DECK-TAG] slide N · …` reference — that is the picker's output, and §12 is the
+  contract for handling it.
+
+**Don't use for:**
+
+- A deck nobody will revise → the picker earns nothing.
+- A PDF or PPTX deliverable with no HTML source → there is nothing to pick from.
+- A one-off diagram or static image → see a diagram skill instead.
+- Replacing a review conversation → the picker sharpens a request, it does not make one.
+
+Before installing, ask: *will this deck be revised by someone pointing at it?* If no, stop.
+
+---
+
+## 3. What you're adding
+
+Three independent features. Install all three unless the user asked for one.
+
+| Feature | Needs | Skip when |
+|---|---|---|
+| Element picker | CSS + DOM + JS (§5) | never — it is the reason this skill exists |
+| Multi-picker | the same blocks; it ships with the picker | the deck is one slide |
+| PDF export | print CSS + a small JS block (§8) | the deck is never printed or shared as PDF |
+
+---
+
+## 4. Anti-patterns
+
+Every row below is a defect seen in a real deck. Grouped by where it bites.
+
+**Picker**
+
+| Anti-pattern | Why it fails |
+|---|---|
+| Copying the highlight classes into the reference | `.pick-hover` / `.pick-selected` / `.pick-sel` are on the element at copy time; unfiltered, every reference carries class names that mean nothing on the next load |
+| Click handler on the bubble phase | The deck's own navigation also fires, so a pick changes the slide |
+| Hotkey with no typing guard | `P` hijacks text entry; `Cmd/Ctrl+P` gets stolen from the browser |
+| A second global named `slides` | One clobbers the other. A block outside the deck's nav IIFE cannot see a `slides` declared inside it — `ReferenceError` |
+| `nth-of-type` counting all previous siblings | Count only siblings of the same tag, or the CSS path resolves to the wrong element |
+| A missing picker id | Silent crash: eleven ids are read with `getElementById`, and some browsers log nothing when one is absent |
+| The ⊕ badge without `position:relative` on the slide | The badge escapes the slide and lands wherever the page puts it |
+
+**Print**
+
+| Anti-pattern | Why it fails |
+|---|---|
+| `#deck{height:auto}` | Flex-based slides shrink their cards and text spills outside them |
+| Trusting `font-size × line-height` in print | Chrome sizes lines from font ascent+descent: a 52px title measured **71.6px of ink per line** and overlapped the block below |
+| `:last-of-type` for the last slide of a subset | In a subset the last printed slide is not the last in the document → a blank trailing page |
+| Omitting `print-color-adjust:exact` | A user who does not tick "Background graphics" gets a white PDF with pale text |
+| A second `function toast()` | Hoisting makes the later one win, and the picker's toast stops appearing |
+| Judging subset export through CDP `Page.printToPDF` | With a non-standard `@page{size:…px}` it can return a single page. Check with the CLI or the browser's own print menu before "fixing" a correct deck |
+| Assuming a `<select>` is hidden by a `button` rule | It is not. `#partDl` must be listed explicitly or the dropdown prints on every page |
+
+**Contrast — the failure a layout audit never sees**
+
+| Anti-pattern | Why it fails |
+|---|---|
+| A dark-card text override that lists only some classes | `.card.tray .ul li b` did not cover `<ul class="locs">`; that list fell through to the light-card rule and measured **1.12:1** — present, positioned, unreadable |
+| Reading the background from `getComputedStyle` | Over a gradient it returns transparent; the walk up the ancestors lands on the wrong colour |
+| Auditing by tag + class + colour only | `<b>` in a white card and `<b>` in a dark tray collapse into one row, and whichever is failing disappears |
+
+---
+
+## 5. The blocks
+
+Three blocks, pasted in three places. **All eleven picker ids are required** — a missing one is
+a silent crash, not an error.
+
+### 5a. CSS — inside the deck's last `<style>`
 
 ```css
+
 /* ============================================================================
    FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (CSS)
    ========================================================================== */
@@ -93,13 +182,13 @@ body.pick-mode,body.pick-mode *{cursor:crosshair !important}
 .slide-pick.on{background:rgba(255,192,0,.95);color:#0B1A45}
 ```
 
-Two requirements on the deck side: the slide container needs `position:relative` (the per-slide
-badge is absolutely positioned inside it), and the badge is created in JS so it follows slides
-being added or removed.
+The slide container needs `position:relative` (the ⊕ badge is absolutely positioned inside it).
+The badge itself is created in JS, so adding or removing slides needs no markup change.
 
-## Step 2 — DOM: paste immediately after `<body>`
+### 5b. DOM — immediately after `<body>`
 
 ```html
+
 <div id="pickBar">
   <button id="pickBtn" title="Element Picker (P)">🎯 Pick element</button>
   <button id="pickMultiBtn" title="Multi-picker (M)">🔲 Multi-pick</button>
@@ -115,12 +204,12 @@ being added or removed.
 </div>
 ```
 
-All eleven ids are required — the JS grabs each with `getElementById`, and a missing one is a silent
-crash (the picker simply does nothing, with no console error on some browsers).
+### 5c. JS — the LAST script block in the document
 
-## Step 3 — JS: paste as the LAST script block in the document
+Last, so the deck's own functions already exist when a pick suppresses a click.
 
 ```js
+
 /* ============================================================================
    FEATURE 1 + 2 — ELEMENT PICKER / MULTI-PICKER (JS)
    Keep this block LAST so the deck's own functions already exist.
@@ -320,20 +409,47 @@ document.addEventListener('click', e => {
 }, true);
 ```
 
-## Step 4 — adapt exactly these things
+---
+
+## 6. Adapt — four things, then you're done
+
+The code carries `[ADAPT]` markers at each of these lines.
 
 | Marker | What to change | Default |
 |---|---|---|
-| `DECK_TAG` | Uppercase deck name. Appears in every reference. | `'DECK'` |
-| `UI_SEL` | Add this deck's chrome selectors — anything that must never be pickable. Without it, clicking the nav or a button produces a reference to the nav or the button. | picker UI only |
-| `.slide` / `canvas` | Only if the deck names them differently. | `.slide` / `.canvas` |
-| slide id pattern | Only if ids are not `slide-N`. | `slide-` |
+| `DECK_TAG` | Uppercase deck name; prefixes every reference so a paste is traceable | `'DECK'` |
+| `UI_SEL` | Every piece of this deck's chrome. Without it, clicking the nav returns a reference to the nav | picker UI only |
+| `.slide` / `canvas` | Only if the deck names them differently | `.slide` / `.canvas` |
+| slide id pattern | Only if ids are not `slide-N` | `slide-` |
 
-## Step 5 — PDF export (1 slide = 1 page)
+---
+
+## 7. Rules that never relax
+
+These are invariants, not preferences. Each one exists because breaking it produced a bug
+listed in §4.
+
+| # | Rule |
+|---|---|
+| 1 | The click handler is registered in the **capture phase** (`addEventListener('click', fn, true)`) with `preventDefault()` + `stopPropagation()`. |
+| 2 | `UI_SEL` lists **every** piece of chrome, and a `<select>` is never assumed to be covered by a `button` rule. |
+| 3 | The highlight classes are filtered out of **both** path builders — the readable path and the CSS path. |
+| 4 | Slide ids are **never renumbered**. Delete a slide and leave the gap: people and notes remember slide numbers. |
+| 5 | The picker block is the **last** script, and it declares no global the deck already owns. |
+| 6 | Reference caps: readable path ≤ 4 levels stopping at the canvas, ≤ 2 class names per node, text snippet ≤ 90 chars, CSS path ≤ 6 levels stopping at the first id. |
+| 7 | In print, `.slide` gets a **rigid** `width`/`height` with `!important`, and large type gets an **absolute** `line-height` in px. |
+| 8 | The last printed slide of a subset is marked explicitly (`.print-last`) and the classes are cleaned on `afterprint`, with a timeout as a failsafe. |
+
+---
+
+## 8. PDF export — 1 slide = 1 page
 
 Add this **inside the same `<style>`**, after the picker CSS:
 
 ```css
+
+/* ============================================================================
+   FEATURE 3 — PDF EXPORT: 1 slide = 1 page (CSS)
    ========================================================================== */
 @media print{
   @page{size:1280px 720px;margin:0}
@@ -372,6 +488,7 @@ Add this **inside the same `<style>`**, after the picker CSS:
 Then, as the **last** script block:
 
 ```js
+
 /* ============================================================================
    FEATURE 3 — PDF EXPORT: 1 slide = 1 page (JS)
    ========================================================================== */
@@ -431,102 +548,88 @@ Then, as the **last** script block:
 })();
 ```
 
-Plus two small pieces of markup in the nav:
+Plus three pieces of markup in the deck's nav:
 
 ```html
+
 <select id="partDl" aria-label="Export a section as PDF"><option value="">Export a section…</option></select>
 <button id="pdfBtn" title="Print / save as PDF — 1 slide = 1 page, 1280x720">⤓ PDF</button>
 <div id="pdfToast" role="status" aria-live="polite"></div>
 ```
 
-## Pitfalls — each of these cost a debugging round
+**Page size is a decision to put to the user, not make yourself.** `@page{size:1280px 720px}`
+gives a full 16:9 page with no margins. A4 landscape is only right when the deck will be
+*physically printed* — at the cost of white bars on the sides. State the trade-off.
 
-**Picker**
+---
 
-1. **Filter the highlight classes out of the copied path.** When a reference is built, the element
-   carries `.pick-hover` / `.pick-selected` / `.pick-sel`. Unfiltered, every reference contains
-   classes that mean nothing on the next page load.
-2. **The click handler must be in the capture phase** (`addEventListener('click', fn, true)`) with
-   `preventDefault()` + `stopPropagation()`, or the deck's own navigation also fires on a pick.
-3. **The hotkey guard must skip typing contexts** (`INPUT` / `TEXTAREA` / `contentEditable`) and
-   modifier combinations, or the picker hijacks typing and the browser's own `Cmd/Ctrl+P`.
-4. **Do not re-declare a global the deck already owns.** If the deck has `const slides` and the
-   picker block has its own, one clobbers the other. `deck.html` shares state through
-   `window.__deck`.
-5. **`nth-of-type` counts siblings of the same tag**, not all previous siblings.
-6. **A missing picker id is a silent crash** — the JS grabs eleven of them; check they all exist.
-7. **The badge needs `position:relative` on the slide container**, otherwise it escapes the slide.
+## 9. Adding this to a deck that already exists
 
-**Print**
+This is the common case, and it is the same three blocks — the work is in §0, not in the paste.
 
-8. **`#deck{height:auto}` collapses the layout.** Flex-based slides shrink their cards and text
-   spills out. Pin `width`/`height` on `.slide` with `!important`.
-9. **Chrome's print engine uses font ascent+descent, not `font-size × line-height`.** A 52px title
-   measured 71.6px of ink per line; three lines then overlap the block below. Pin absolute
-   `line-height` in px inside the print block.
-10. **Do not rely on `:last-of-type` for the last slide of a subset.** In a subset the last printed
-    slide is not the last in the document. Mark it explicitly with `.print-last`.
-11. **`print-color-adjust:exact` is mandatory**, or a user who forgets to tick "Background graphics"
-    gets a white PDF with pale text.
-12. **Never give the PDF code a second `function toast()`.** Hoisting makes the later one win, and
-    the picker's toast stops appearing.
-13. **Chrome CLI ≠ CDP `Page.printToPDF`.** `--print-to-pdf` and the browser's print menu work; the
-    CDP path can return a single page with a non-standard `@page{size:…px}`. Check with the CLI
-    before "fixing" a deck that is already correct.
+1. Read the deck and resolve the three facts from §0. If the slide container or ids do not match
+   the defaults, fix the references **before** pasting, not after something silently fails.
+2. Back the file up.
+3. Paste CSS, DOM, JS in the three places named in §5. Then the print CSS and PDF JS from §8 if
+   the deck is shared as PDF.
+4. Extend `UI_SEL` with this deck's chrome. Walk the nav and the fixed-position elements; each
+   one you miss becomes a pickable element.
+5. Open the deck and press <kbd>P</kbd>, then <kbd>M</kbd>, then the PDF button. If the picker
+   does nothing, an id is missing — check the console for a crash, then compare the eleven ids.
 
-**Working on decks generally**
+Do not restyle the deck while installing. Two changes at once make a silent failure
+unattributable.
 
-14. **Never renumber slide ids.** Delete a slide and leave the gap (`slide-6…13` stays); people and
-    notes remember slide numbers.
-15. **Edit the deck HTML directly.** If a generator script exists, edit the generator and regenerate —
-    otherwise the next run wipes hand edits.
-16. **Reference strings must survive a reload**: cap the readable path at ~4 levels, stop at the
-    canvas, keep two class names per node, cap the text snippet at 90 chars.
+---
 
-**Contrast — the failure mode a layout audit never sees**
+## 10. Worked example
 
-17. **A dark-card text override only covers the classes you listed.** `deck.html` had
-    `.card.tray .ul li b{color:#FFFFFF}` for its bullet lists, but a second list used
-    `<ul class="locs">`. That list fell through to the light-card rule `color:var(--navy)` —
-    navy `rgb(11,26,69)` on the tray's `rgb(14,35,86)`, measured **1.12:1**. The text was there,
-    positioned correctly, and effectively invisible. Whenever you add a dark variant of a
-    component, list *every* class the component can carry, and check the ones you did not.
-18. **Measure contrast from sampled pixels, and sample in the right place.** Assumed backgrounds
-    lie: `getComputedStyle().backgroundColor` returns `rgba(0,0,0,0)` over a gradient, and walking
-    up the ancestors lands on the wrong colour. Sampling inside the text box fails for a narrow
-    element (a 21×42 `<em>` holding one letter is mostly glyph, so the text colour wins the vote);
-    sampling just outside fails for an element that paints its own background (a `<kbd>` on a white
-    card). Rule: if the element's own background is opaque, use it; otherwise sample a frame just
-    outside the box. Verify the checker by mutation — reintroduce the bad colour and confirm it fails.
-19. **Deduplicate audit results by ancestor context, not by tag+class+colour.** `<b>` in a white
-    card and `<b>` in a dark tray share the same tag, class and colour string; collapsing them into
-    one row hides whichever one is failing.
+`deck.html` in this repository is a working six-slide deck with all three features installed.
+Its source is marked `FEATURE 1 + 2` and `FEATURE 3` at every insertion point, so the location of
+each block is visible rather than described.
 
-## Reference format
+Use it when the target deck's structure differs from the defaults in §0, and to see what a
+correctly wired picker looks like before debugging one.
+
+---
+
+## 11. Output
+
+The deliverable is the deck itself — a single self-contained `.html` file:
+
+- Embedded CSS, no external assets except web fonts
+- No runtime dependencies, no build step, no package install
+- Renders correctly opened directly from disk, and prints correctly from the browser
+
+The picker's own UI is chrome: it must never appear in the PDF, and it must never be pickable.
+
+---
+
+## 12. Agent-side contract — when a reference arrives
+
+A reference is the user pointing at something. Handle it as a location, not a description.
 
 ```
+
 [DECK-TAG] slide 3 · div.pad > article.card · text: "Element Picker" · size 276x216 · css: #slide-3 > div.pad:nth-of-type(1) > article.card:nth-of-type(2)
 ```
 
-Multi-select batches start with a count header, then one reference per line in DOM order:
+A multi-pick batch starts with a count header, then one reference per line in **DOM order** —
+so the paste reads like the deck rather than like the user's clicking history:
 
 ```
+
 # DECK-TAG multi-selection (3 refs)
 [DECK-TAG] slide 2 — WHOLE SECTION · Corrections fail in language · css: #slide-2
 [DECK-TAG] slide 3 · ol.steps > li · text: "Hover: cyan outline…" · size 512x42 · css: #slide-3 > … > li:nth-of-type(2)
 ```
 
-## Agent-side contract — what to do when a reference arrives
+When one arrives:
 
 1. **Resolve the `css:` path and verify the element still exists and matches the text snippet.**
-   Do not trust the path blindly: the deck may have changed since the reference was copied.
-2. **Apply the change to the deck source**, not to a generated output if a generator exists.
+   Do not trust the path blindly — the deck may have changed since the reference was copied.
+2. **Apply the change to the deck source.** If a generator script exists, change the generator and
+   regenerate; a hand edit to generated output is wiped on the next run.
 3. **Re-check the affected slide** before reporting back.
 4. **For a `multi-selection (N refs)` batch:** apply all N, then confirm the count so nothing is
    silently dropped.
-
-## Reference decks
-
-`deck.html` in this repository is a working 6-slide deck with all three features installed, and its
-source is marked `FEATURE 1 + 2` / `FEATURE 3` at each insertion point. Use it as the worked example
-when the target deck's structure differs.

@@ -70,9 +70,21 @@ cp SKILL.md CLAUDE.md && cp SKILL.md AGENTS.md
 ```
 
 `SKILL.md` is self-sufficient: it carries the full copy-paste blocks for all three features, the
-adaptation points (`DECK_TAG`, `UI_SEL`, slide/canvas selectors), the pitfalls, the reference format,
-and the agent-side contract for handling a reference that arrives in chat. An agent can implement the
-tools into **an existing deck** using nothing but that file.
+adaptation points (`DECK_TAG`, `UI_SEL`, slide/canvas selectors), the anti-patterns, the reference
+format, and the agent-side contract for handling a reference that arrives in chat. An agent can
+implement the tools into **an existing deck** using nothing but that file.
+
+It reads as a numbered spine, so any section can be cited by number:
+
+```
+§0  Before you paste — read the deck        §6  Adapt — four things
+§1  Philosophy                              §7  Rules that never relax
+§2  When to use — and when not to           §8  PDF export
+§3  What you're adding                      §9  Adding this to an existing deck
+§4  Anti-patterns                           §10 Worked example
+§5  The blocks (CSS, DOM, JS)               §11 Output
+                                            §12 Agent-side contract
+```
 
 Trigger phrase: **`/implement-slide-tools`**.
 
