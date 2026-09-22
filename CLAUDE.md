@@ -483,6 +483,25 @@ Plus two small pieces of markup in the nav:
 16. **Reference strings must survive a reload**: cap the readable path at ~4 levels, stop at the
     canvas, keep two class names per node, cap the text snippet at 90 chars.
 
+**Contrast — the failure mode a layout audit never sees**
+
+17. **A dark-card text override only covers the classes you listed.** `deck.html` had
+    `.card.tray .ul li b{color:#FFFFFF}` for its bullet lists, but a second list used
+    `<ul class="locs">`. That list fell through to the light-card rule `color:var(--navy)` —
+    navy `rgb(11,26,69)` on the tray's `rgb(14,35,86)`, measured **1.12:1**. The text was there,
+    positioned correctly, and effectively invisible. Whenever you add a dark variant of a
+    component, list *every* class the component can carry, and check the ones you did not.
+18. **Measure contrast from sampled pixels, and sample in the right place.** Assumed backgrounds
+    lie: `getComputedStyle().backgroundColor` returns `rgba(0,0,0,0)` over a gradient, and walking
+    up the ancestors lands on the wrong colour. Sampling inside the text box fails for a narrow
+    element (a 21×42 `<em>` holding one letter is mostly glyph, so the text colour wins the vote);
+    sampling just outside fails for an element that paints its own background (a `<kbd>` on a white
+    card). Rule: if the element's own background is opaque, use it; otherwise sample a frame just
+    outside the box. Verify the checker by mutation — reintroduce the bad colour and confirm it fails.
+19. **Deduplicate audit results by ancestor context, not by tag+class+colour.** `<b>` in a white
+    card and `<b>` in a dark tray share the same tag, class and colour string; collapsing them into
+    one row hides whichever one is failing.
+
 ## Reference format
 
 ```

@@ -49,7 +49,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#050B1E;
 .card.tray{background:var(--tray);border:1px solid rgba(34,211,238,.42);
   box-shadow:0 10px 26px rgba(0,0,0,.28)}
 .qlabel{font-family:var(--font-h);font-size:12px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--cyan-d)}
+  text-transform:uppercase;color:#0E6B85}
 .card.tray .qlabel{color:var(--cyan)}
 .quote{margin:0;font-family:var(--font-h);font-size:19px;font-weight:600;line-height:1.34;color:var(--navy)}
 .card.tray .quote,.card.tray li,.card.tray p{color:#F4F7FF}
@@ -78,6 +78,10 @@ pre .g{color:var(--amber);font-weight:600}
 .locs li{font-size:14px;line-height:1.36;color:var(--slate);padding-left:14px;position:relative}
 .locs li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--cyan)}
 .locs li b{color:var(--navy)}
+/* .locs inside a dark card: var(--navy) on the tray background measured 1.12:1.
+   The .card.tray .ul rule above only covers <ul class="ul">, not this list. */
+.card.tray .locs li{color:var(--muted)}
+.card.tray .locs li b{color:#FFFFFF}
 
 /* tables ------------------------------------------------------------------- */
 table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
