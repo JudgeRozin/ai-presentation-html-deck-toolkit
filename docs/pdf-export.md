@@ -80,18 +80,26 @@ setTimeout(clean, 60000);                                 // failsafe: never get
 | `#deck` height in print mode | `720 × number of slides` px (10 slides → 7200) |
 | Words per page | rises after the fix (one page went 97 → 160) |
 
-## Verification
+## Verification — what to check
 
-`tools/check_pdf_export.py` prints the deck with Chrome and inspects every page word by word
-(`pdftotext -bbox`), because the failure mode that matters is not a wrong page count — it is text
-missing or overlapping *inside* a page whose count is right. It fails on: page count mismatch, wrong
-page size, words outside the page box, words colliding on a line, and empty pages.
+The failure mode that matters is not a wrong page count: it is text missing or overlapping *inside* a
+page whose count is right. Two commands catch most of it:
 
-Known limitation, worth stating instead of hiding: the per-word boxes from `pdftotext -bbox` are font
-**metric** boxes (~2.6em tall), so "boxes overlap vertically" warnings are usually multi-column or
-line-box noise, not real collisions. Treat `luar` (outside) and `nabrak` (collide) as hard failures and
-`tumpuk` (stacked) as something to review by hand. For a real ink-level check, use
-`tools/fit_check.py`, which measures rendered text ink boxes in the browser.
+```bash
+pdfinfo out.pdf | grep -E 'Pages|Page size'   # Pages = slide count · Page size must be 960 x 540 pts
+pdftoppm -png -r 96 out.pdf pg                # each page must come out exactly 1280x720 px
+pdftotext -bbox out.pdf -                     # per-word boxes: anything outside 0,0..960,540 is a bug
+```
+
+Then look at the PDF yourself: no nav, hint or picker chrome printed, no blank trailing page, dark
+backgrounds intact, and large headings not overlapping the block beneath them.
+
+One limitation worth stating instead of hiding: the per-word boxes from `pdftotext -bbox` are font
+**metric** boxes (~2.6em tall), so "boxes overlap vertically" noise is usually multi-column layout or
+line boxes rather than real collisions. Treat words **outside the page** and words colliding **on the
+same line** as hard failures, and review vertical stacking by hand. For an ink-level check of the deck
+itself, measure rendered text boxes in the browser with `Range.getClientRects()` — element bounding
+boxes can be 2–27px larger than the ink and produce false positives.
 
 ## A decision to put to the user, not make yourself
 
