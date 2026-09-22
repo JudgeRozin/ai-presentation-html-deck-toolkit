@@ -4,7 +4,8 @@ A picker baked into the deck HTML: the user points at an element, the deck copie
 reference, and that reference is pasted back into the chat. It converts "the blue one, bottom right"
 into an instruction a machine can locate exactly.
 
-The implementation lives in `deck.html` in the blocks marked `FEATURE 1 + 2`. This document is the
+The implementation lives in `skills/implement-slide-tools/deck.html`, in the blocks marked
+`FEATURE 1 + 2`. This document is the
 contract it implements and the reasoning behind the parts that are easy to get subtly wrong.
 
 ## UX contract

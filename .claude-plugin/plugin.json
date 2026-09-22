@@ -1,0 +1,26 @@
+{
+  "name": "implement-slide-tools",
+  "description": "Add an element picker, a multi-picker and PDF export (1 slide = 1 page) to an HTML slide deck. The picker copies a reference with a slide number, a readable DOM path, a text snippet and an :nth-of-type CSS path, so an agent can locate the exact element instead of guessing from \"the blue box, bottom right\". One self-contained HTML file, no dependencies.",
+  "version": "1.0.0",
+  "author": {
+    "name": "JudgeRozin",
+    "url": "https://github.com/JudgeRozin"
+  },
+  "homepage": "https://github.com/JudgeRozin/ai-presentation-html-deck-toolkit",
+  "repository": "https://github.com/JudgeRozin/ai-presentation-html-deck-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "claude-code",
+    "codex",
+    "slides",
+    "presentation",
+    "html",
+    "svg",
+    "picker",
+    "pdf-export"
+  ],
+  "skills": [
+    "./skills/implement-slide-tools"
+  ]
+}

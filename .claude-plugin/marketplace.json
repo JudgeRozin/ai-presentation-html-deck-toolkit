@@ -1,0 +1,19 @@
+{
+  "name": "judgerozin-slide-tools",
+  "owner": {
+    "name": "JudgeRozin",
+    "url": "https://github.com/JudgeRozin"
+  },
+  "metadata": {
+    "description": "Element picker, multi-picker and 1-slide-1-page PDF export for HTML slide decks. An agent skill with a working example. No dependencies, no build step.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "implement-slide-tools",
+      "source": "./skills/implement-slide-tools",
+      "description": "Element picker, multi-picker and 1-slide-1-page PDF export for HTML slide decks. An agent skill with a working example. No dependencies, no build step.",
+      "version": "1.0.0"
+    }
+  ]
+}

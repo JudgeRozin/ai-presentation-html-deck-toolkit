@@ -18,7 +18,7 @@ Three features, one HTML file, no dependencies, no build step:
 ```bash
 git clone git@github.com:JudgeRozin/ai-presentation-html-deck-toolkit.git
 cd ai-presentation-html-deck-toolkit
-open deck.html          # macOS; xdg-open on Linux, start on Windows
+open skills/implement-slide-tools/deck.html    # macOS; xdg-open on Linux, start on Windows
 ```
 
 Press <kbd>P</kbd>, click any element — the reference lands on your clipboard. Press <kbd>M</kbd>,
@@ -54,19 +54,13 @@ nothing was dropped.
 
 ## For AI agents
 
-This repository is built to be consumed by an agent, not just read by a human.
+This repository is built to be consumed by an agent, not just read by a human. The skill lives at
+the path agent tooling expects:
 
-| File | Read by |
-|---|---|
-| **`SKILL.md`** | Claude Skill / OpenClaw style skill loaders |
-| **`CLAUDE.md`** | Claude Code |
-| **`AGENTS.md`** | Codex, ChatGPT, Cursor, and other agents that read `AGENTS.md` |
-
-The three files are **byte-identical** — same instructions, three names, so whichever convention your
-agent follows, it finds them. `SKILL.md` is the source; after editing it, re-sync the other two:
-
-```bash
-cp SKILL.md CLAUDE.md && cp SKILL.md AGENTS.md
+```
+skills/implement-slide-tools/
+├── SKILL.md     the guide: read this, then paste into the target deck
+└── deck.html    the worked example, with all three features installed
 ```
 
 `SKILL.md` is self-sufficient: it carries the full copy-paste blocks for all three features, the
@@ -101,18 +95,37 @@ Trigger phrase: **`/implement-slide-tools`**.
 ## Repository contents
 
 ```
-deck.html          working 6-slide deck with all three features installed
-SKILL.md           implementation guide for agents (source of truth)
-CLAUDE.md          identical copy for Claude Code
-AGENTS.md          identical copy for Codex / ChatGPT / Cursor
+skills/implement-slide-tools/
+  SKILL.md             implementation guide for agents (source of truth)
+  deck.html            working six-slide deck with all three features installed
+.claude-plugin/
+  plugin.json          Claude Code plugin manifest
+  marketplace.json     so this repo can be added as a marketplace
+.codex-plugin/
+  plugin.json          Codex plugin manifest
+AGENTS.md              repo-level instructions for Codex / ChatGPT / Cursor
+CLAUDE.md              pointer for Claude Code (which also reads AGENTS.md)
 docs/
-  element-picker.md  picker UX contract, reference format, implementation notes
-  pdf-export.md      print CSS recipe, pitfalls, measured reference numbers
-  img/               screenshots used in this README
+  element-picker.md    picker UX contract, reference format, implementation notes
+  pdf-export.md        print CSS recipe, anti-patterns, measured reference numbers
+  img/                 screenshots used in this README
 ```
 
 `deck.html` is the worked example: its source is marked `FEATURE 1 + 2` and `FEATURE 3` at every
 insertion point, so an agent can see exactly where each block belongs.
+
+### Installing the skill
+
+```bash
+# copy it into whichever directory your agent loads skills from
+cp -r skills/implement-slide-tools ~/.claude/skills/
+```
+
+Or point your agent at the subdirectory URL:
+
+```
+https://github.com/JudgeRozin/ai-presentation-html-deck-toolkit/tree/main/skills/implement-slide-tools
+```
 
 ## Requirements
 

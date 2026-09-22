@@ -584,7 +584,7 @@ unattributable.
 
 ## 10. Worked example
 
-`deck.html` in this repository is a working six-slide deck with all three features installed.
+`deck.html` in this skill folder is a working six-slide deck with all three features installed.
 Its source is marked `FEATURE 1 + 2` and `FEATURE 3` at every insertion point, so the location of
 each block is visible rather than described.
 
